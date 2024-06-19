@@ -1,4 +1,5 @@
-const ProcessManager = require('../process/process_manager');
+const ProcessManager = require('../kernel/process_manager');
+
 const processManager = new ProcessManager();
 
 function runProcessManagerTests() {
@@ -6,20 +7,14 @@ function runProcessManagerTests() {
     processManager.initialize();
 
     // Create a parent process
-    const parentProcessId = processManager.createProcess(0, {}, null, false, null, null, null);
+    const parentProcessId = processManager.createProcess(1, 5);
 
     // Create a child process
-    const childProcessId = processManager.createProcess(0, {}, parentProcessId, true, null, null, null);
-
-    // Create threads in the parent process
-    processManager.createThread(parentProcessId, 'startAddress1', 1024, 10);
-    processManager.createThread(parentProcessId, 'startAddress2', 1024, 10);
-
-    // Create a thread in the child process
-    processManager.createThread(childProcessId, 'startAddress3', 1024, 10);
+    const childProcessId = processManager.createProcess(2, 3);
 
     // Simulate IPC
-    processManager.handleIPC('Hello from parent', parentProcessId, childProcessId);
+    processManager.sendMessage(parentProcessId, 'Hello from parent');
+    processManager.sendMessage(childProcessId, 'Hello from child');
 
     // Terminate the child process
     processManager.terminateProcess(childProcessId);

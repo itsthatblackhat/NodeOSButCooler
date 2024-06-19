@@ -1,4 +1,4 @@
-const LoggingManager = require('../logging/logging_manager');
+const LoggingManager = require('../logging/logging_manager.js');
 const loggingManager = new LoggingManager();
 
 function runLoggingManagerTests() {

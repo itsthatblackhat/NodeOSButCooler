@@ -1,4 +1,4 @@
-const NetworkManager = require('../network/network_manager');
+const NetworkManager = require('../network/network_manager.js');
 const networkManager = new NetworkManager();
 
 function runNetworkManagerTests() {

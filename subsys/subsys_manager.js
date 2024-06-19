@@ -1,5 +1,5 @@
-const CSRSS = require('./csrss');
-const SMSS = require('./smss');
+const CSRSS = require('./csrss.js');
+const SMSS = require('./smss.js');
 
 class SubsystemManager {
     constructor() {

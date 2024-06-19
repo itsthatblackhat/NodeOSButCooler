@@ -1,5 +1,5 @@
 const readline = require('readline');
-const Kernel = require('../kernel/kernel');
+const Kernel = require('../kernel/kernel.js');
 
 class Shell {
     constructor() {

@@ -7,23 +7,25 @@ function runGraphicsManagerTests() {
 
     // Create a window
     const windowId = graphicsManager.createWindow('Test Window', 800, 600, { resizable: true });
+    console.log(`Window created with ID: ${windowId}`);
+
+    // Draw graphics
+    graphicsManager.drawGraphics(windowId, { description: 'Drawing some graphics...' });
+
+    // Handle user interaction
+    graphicsManager.handleUserInteraction(windowId, { type: 'click', x: 100, y: 150 });
 
     // Get window info
     const windowInfo = graphicsManager.getWindowInfo(windowId);
-    console.log(`Window Info:`, windowInfo);
+    console.log(`Window Info: ${JSON.stringify(windowInfo, null, 2)}`);
 
-    // Draw graphics in the window
-    graphicsManager.drawGraphics(windowId, { color: 'red', x: 100, y: 100, width: 200, height: 200 });
-
-    // Handle user interaction
-    graphicsManager.handleUserInteraction(windowId, { type: 'click' });
-
-    // List all windows
+    // List windows
     const windows = graphicsManager.listWindows();
-    console.log("Windows:", windows);
+    console.log(`Windows: ${JSON.stringify(windows, null, 2)}`);
 
     // Close the window
     graphicsManager.closeWindow(windowId);
+    console.log(`Window ${windowId} closed`);
 
     console.log("Graphics manager tests completed.");
 }

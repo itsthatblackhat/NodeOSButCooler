@@ -1,4 +1,4 @@
-const UIManager = require('../ui/ui_manager');
+const UIManager = require('../ui/ui_manager.js');
 const uiManager = new UIManager();
 
 function runUIManagerTests() {

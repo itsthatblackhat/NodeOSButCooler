@@ -1,4 +1,4 @@
-const UserManager = require('../security/user_manager');
+const UserManager = require('../security/user_manager.js');
 const userManager = new UserManager();
 
 function runUserManagerTests() {

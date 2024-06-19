@@ -1,43 +1,25 @@
-const SecurityManager = require('../security/security_manager');
+// test_security_manager.js
+
+const SecurityManager = require('../security/security_manager.js');
+
+// Initialize Security Manager
 const securityManager = new SecurityManager();
+securityManager.initialize();
 
-function runSecurityManagerTests() {
-    console.log("Running security manager tests...");
-    securityManager.initialize();
+// Test User Authentication
+const username = 'admin';
+const password = 'admin123';
+const isAuthenticated = securityManager.authenticate(username, password);
+console.log(`Authentication for user ${username}: ${isAuthenticated}`);
 
-    // Add users
-    securityManager.addUser('alice', 'password123', ['read', 'write']);
-    securityManager.addUser('bob', 'securepassword', ['read']);
+// Test Adding and Removing Users
+securityManager.addUser('newUser', 'newPassword', 'user');
+securityManager.removeUser('newUser');
 
-    // Authenticate users
-    console.log(securityManager.authenticateUser('alice', 'password123')); // Should be true
-    console.log(securityManager.authenticateUser('bob', 'wrongpassword')); // Should be false
+// Test Permissions
+securityManager.addPermission('admin', 'resource1', 'read');
+const hasPermission = securityManager.checkPermission('admin', 'resource1', 'read');
+console.log(`Permission check for user admin: ${hasPermission}`);
 
-    // Check permissions
-    console.log(securityManager.checkPermissions('alice', '/file.txt', 'read')); // Should be true
-    console.log(securityManager.checkPermissions('bob', '/file.txt', 'write')); // Should be false
-
-    // Change password
-    console.log(securityManager.changePassword('alice', 'password123', 'newpassword')); // Should be true
-    console.log(securityManager.authenticateUser('alice', 'newpassword')); // Should be true
-
-    // Update permissions
-    console.log(securityManager.updatePermissions('bob', ['read', 'write'])); // Should be true
-    console.log(securityManager.checkPermissions('bob', '/file.txt', 'write')); // Should be true
-
-    // List users
-    const users = securityManager.listUsers();
-    console.log("Users:", users);
-
-    // Get user info
-    const userInfo = securityManager.getUserInfo('alice');
-    console.log("User Info for alice:", userInfo);
-
-    // Remove user
-    securityManager.removeUser('alice');
-    console.log(securityManager.authenticateUser('alice', 'newpassword')); // Should be false
-
-    console.log("Security manager tests completed.");
-}
-
-runSecurityManagerTests();
+// Test Secure IPC
+securityManager.secureIPC('admin', 'user', 'Hello, this is a secure message!');

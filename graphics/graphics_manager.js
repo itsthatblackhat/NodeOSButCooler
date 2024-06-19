@@ -1,5 +1,3 @@
-const { createCanvas } = require('canvas');
-
 class GraphicsManager {
     constructor() {
         this.windows = new Map(); // Maps windowId to window information
@@ -21,17 +19,13 @@ class GraphicsManager {
         const windowId = this.nextWindowId++;
         console.log(`Creating window ${windowId} with title: ${title}`);
 
-        const canvas = createCanvas(width, height);
-        const context = canvas.getContext('2d');
-
         const windowInfo = {
             id: windowId,
             title,
             width,
             height,
             options,
-            canvas,
-            context,
+            content: '',
             status: 'created'
         };
 
@@ -57,12 +51,8 @@ class GraphicsManager {
         if (!window) {
             throw new Error(`Window with ID ${windowId} not found`);
         }
-        const { context } = window;
-
-        // Simulate drawing graphics
-        context.fillStyle = graphicsData.color || 'black';
-        context.fillRect(graphicsData.x || 0, graphicsData.y || 0, graphicsData.width || 50, graphicsData.height || 50);
-
+        // Simulate drawing graphics by updating the content
+        window.content = graphicsData.description || 'Graphics data';
         console.log(`Graphics drawn in window ${windowId}`);
     }
 

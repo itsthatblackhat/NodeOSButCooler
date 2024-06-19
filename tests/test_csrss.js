@@ -1,4 +1,4 @@
-const CSRSS = require('../subsys/csrss');
+const CSRSS = require('../subsys/csrss.js');
 const csrss = new CSRSS();
 
 function runCsrssTests() {

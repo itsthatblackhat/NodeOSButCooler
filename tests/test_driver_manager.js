@@ -1,4 +1,4 @@
-const DriverManager = require('../drivers/driver_manager');
+const DriverManager = require('../drivers/driver_manager.js');
 const driverManager = new DriverManager();
 
 function runDriverManagerTests() {

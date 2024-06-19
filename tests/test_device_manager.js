@@ -1,35 +1,27 @@
-const DeviceManager = require('../device/device_manager');
+// test_device_manager.js
+
+const DeviceManager = require('../device/device_manager.js');
+
+// Initialize Device Manager
 const deviceManager = new DeviceManager();
+deviceManager.initialize();
 
-function runDeviceManagerTests() {
-    console.log("Running device manager tests...");
-    deviceManager.initialize();
+// Test Device Creation and Deletion
+const deviceId1 = deviceManager.createDevice('Keyboard', 'Input', { manufacturer: 'Logitech', model: 'K120' });
+console.log(`Device created with ID: ${deviceId1}`);
 
-    // Create a device
-    const deviceId = deviceManager.createDevice('Test Device', 'Generic', { removable: true });
+const deviceId2 = deviceManager.createDevice('Mouse', 'Input', { manufacturer: 'Logitech', model: 'M185' });
+console.log(`Device created with ID: ${deviceId2}`);
 
-    // Get device info
-    const deviceInfo = deviceManager.getDeviceInfo(deviceId);
-    console.log(`Device Info:`, deviceInfo);
+deviceManager.listDevices();
 
-    // Handle device requests
-    const readResult = deviceManager.handleDeviceRequest(deviceId, 'read', { buffer: Buffer.alloc(1024), offset: 0, length: 512 });
-    console.log(`Read Result: ${readResult}`);
+deviceManager.deleteDevice(deviceId1);
+console.log(`Device with ID ${deviceId1} deleted`);
 
-    const writeResult = deviceManager.handleDeviceRequest(deviceId, 'write', { buffer: Buffer.from('Hello Device!'), offset: 0, length: 12 });
-    console.log(`Write Result: ${writeResult}`);
+deviceManager.listDevices();
 
-    const controlResult = deviceManager.handleDeviceRequest(deviceId, 'control', { command: 'reset' });
-    console.log(`Control Result: ${controlResult}`);
+// Test Plug and Play Functionality
+deviceManager.plugDevice('device3', { name: 'Monitor', type: 'Display', characteristics: { manufacturer: 'Dell', model: 'U2419H' } });
+deviceManager.unplugDevice(deviceId2);
 
-    // List all devices
-    const devices = deviceManager.listDevices();
-    console.log("Devices:", devices);
-
-    // Delete the device
-    deviceManager.deleteDevice(deviceId);
-
-    console.log("Device manager tests completed.");
-}
-
-runDeviceManagerTests();
+deviceManager.listDevices();

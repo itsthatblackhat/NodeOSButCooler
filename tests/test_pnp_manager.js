@@ -1,4 +1,4 @@
-const PnPManager = require('../pnp/pnp_manager');
+const PnPManager = require('../pnp/pnp_manager.js');
 const pnpManager = new PnPManager();
 
 function runPnPManagerTests() {

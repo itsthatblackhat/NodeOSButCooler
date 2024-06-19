@@ -1,4 +1,4 @@
-const SubsystemManager = require('../subsys/subsys_manager');
+const SubsystemManager = require('../subsys/subsys_manager.js');
 const subsystemManager = new SubsystemManager();
 
 function runSubsystemManagerTests() {

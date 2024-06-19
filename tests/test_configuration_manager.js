@@ -1,4 +1,4 @@
-const ConfigurationManager = require('../configuration/configuration_manager');
+const ConfigurationManager = require('../configuration/configuration_manager.js');
 const configManager = new ConfigurationManager();
 
 function runConfigurationManagerTests() {

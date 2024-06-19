@@ -1,89 +1,81 @@
 class SecurityManager {
     constructor() {
-        this.userDatabase = new Map(); // Maps username to user information (password, permissions)
+        this.users = new Map();
+        this.permissions = new Map();
     }
 
     initialize() {
         console.log("Initializing Security Manager...");
-        this._initializeSecurity();
+        this._setupDefaultUsers();
         console.log("Security Manager initialized.");
     }
 
-    _initializeSecurity() {
-        console.log("Setting up security policies and user database...");
-        // Simulate setting up security policies and initializing user database
+    _setupDefaultUsers() {
+        console.log("Setting up default users...");
+        // Simulate setting up default users and permissions
+        this.users.set('admin', { password: 'admin123', role: 'admin' });
+        this.users.set('user', { password: 'user123', role: 'user' });
     }
 
-    authenticateUser(username, password) {
-        console.log(`Authenticating user: ${username}`);
-        const user = this.userDatabase.get(username);
+    authenticate(username, password) {
+        const user = this.users.get(username);
         if (user && user.password === password) {
-            console.log("Authentication successful");
+            console.log(`User ${username} authenticated successfully.`);
             return true;
         } else {
-            console.log("Authentication failed");
+            console.error(`Authentication failed for user ${username}.`);
             return false;
         }
     }
 
-    checkPermissions(username, resource, desiredAccess) {
-        console.log(`Checking permissions for user: ${username} on resource: ${resource}`);
-        const user = this.userDatabase.get(username);
-        if (user && user.permissions.includes(desiredAccess)) {
-            console.log("Permission granted");
-            return true;
-        } else {
-            console.log("Permission denied");
-            return false;
+    addUser(username, password, role = 'user') {
+        if (this.users.has(username)) {
+            throw new Error(`User ${username} already exists.`);
         }
-    }
-
-    addUser(username, password, permissions) {
-        console.log(`Adding user: ${username}`);
-        this.userDatabase.set(username, { password, permissions });
-        console.log(`User ${username} added`);
+        this.users.set(username, { password, role });
+        console.log(`User ${username} added successfully.`);
     }
 
     removeUser(username) {
-        console.log(`Removing user: ${username}`);
-        this.userDatabase.delete(username);
-        console.log(`User ${username} removed`);
+        if (this.users.has(username)) {
+            this.users.delete(username);
+            console.log(`User ${username} removed successfully.`);
+        } else {
+            console.error(`User ${username} not found.`);
+        }
     }
 
-    changePassword(username, oldPassword, newPassword) {
-        console.log(`Changing password for user: ${username}`);
-        const user = this.userDatabase.get(username);
-        if (user && user.password === oldPassword) {
-            user.password = newPassword;
-            console.log("Password changed successfully");
+    addPermission(username, resource, permission) {
+        if (!this.permissions.has(resource)) {
+            this.permissions.set(resource, new Map());
+        }
+        this.permissions.get(resource).set(username, permission);
+        console.log(`Permission ${permission} for resource ${resource} added to user ${username}.`);
+    }
+
+    checkPermission(username, resource, permission) {
+        if (this.permissions.has(resource) && this.permissions.get(resource).get(username) === permission) {
+            console.log(`User ${username} has ${permission} permission for resource ${resource}.`);
             return true;
         } else {
-            console.log("Password change failed");
+            console.error(`User ${username} does not have ${permission} permission for resource ${resource}.`);
             return false;
         }
     }
 
-    updatePermissions(username, newPermissions) {
-        console.log(`Updating permissions for user: ${username}`);
-        const user = this.userDatabase.get(username);
-        if (user) {
-            user.permissions = newPermissions;
-            console.log("Permissions updated successfully");
-            return true;
-        } else {
-            console.log("Permissions update failed");
-            return false;
-        }
+    // Secure Inter-Process Communication (IPC)
+    secureIPC(sender, receiver, message) {
+        console.log(`Securing IPC from ${sender} to ${receiver}`);
+        // Simulate securing the message
+        const encryptedMessage = `encrypted(${message})`;
+        console.log(`Encrypted message: ${encryptedMessage}`);
+        // Simulate sending the secured message
+        this.sendMessage(receiver, encryptedMessage);
     }
 
-    listUsers() {
-        console.log("Listing all users...");
-        return Array.from(this.userDatabase.keys());
-    }
-
-    getUserInfo(username) {
-        console.log(`Getting info for user: ${username}`);
-        return this.userDatabase.get(username);
+    sendMessage(receiver, message) {
+        console.log(`Sending message to ${receiver}: ${message}`);
+        // Simulate message sending
     }
 }
 

@@ -1,4 +1,4 @@
-const AuthenticationManager = require('../authentication/authentication_manager');
+const AuthenticationManager = require('../authentication/authentication_manager.js');
 const authManager = new AuthenticationManager();
 
 function runAuthenticationManagerTests() {

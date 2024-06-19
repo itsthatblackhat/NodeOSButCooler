@@ -1,4 +1,4 @@
-const RegistryManager = require('../registry/registry_manager');
+const RegistryManager = require('../registry/registry_manager.js');
 const registryManager = new RegistryManager();
 
 function runRegistryManagerTests() {

@@ -1,158 +1,154 @@
-const EventEmitter = require('events');
+// Define the Process Control Block (PCB)
+class PCB {
+    constructor(pid, state, priority, programCounter, registers, memory) {
+        this.pid = pid; // Process ID
+        this.state = state; // Process State
+        this.priority = priority; // Process Priority
+        this.programCounter = programCounter; // Program Counter
+        this.registers = registers; // CPU Registers
+        this.memory = memory; // Memory allocated to the process
+    }
+}
 
-class ProcessManager extends EventEmitter {
+// Process States
+const ProcessState = {
+    NEW: 'NEW',
+    READY: 'READY',
+    RUNNING: 'RUNNING',
+    WAITING: 'WAITING',
+    TERMINATED: 'TERMINATED'
+};
+
+// Time Quantum for Round Robin Scheduling
+const TIME_QUANTUM = 5;
+
+// Define a message queue for IPC
+class MessageQueue {
     constructor() {
-        super();
-        this.processTable = new Map();
-        this.threadTable = new Map();
-        this.nextProcessId = 1;
-        this.nextThreadId = 1;
+        this.queue = [];
+    }
+
+    sendMessage(message) {
+        this.queue.push(message);
+        console.log(`Message sent: ${JSON.stringify(message)}`);
+    }
+
+    receiveMessage() {
+        if (this.queue.length > 0) {
+            const message = this.queue.shift();
+            console.log(`Message received: ${JSON.stringify(message)}`);
+            return message;
+        } else {
+            console.log('No messages in the queue.');
+            return null;
+        }
+    }
+}
+
+class ProcessManager {
+    constructor() {
+        this.processTable = [];
+        this.globalMessageQueue = new MessageQueue();
+        this.currentProcessIndex = 0;
     }
 
     initialize() {
         console.log("Initializing Process Manager...");
-        this.on('createProcess', this.createProcess.bind(this));
-        this.on('terminateProcess', this.terminateProcess.bind(this));
-        this.on('createThread', this.createThread.bind(this));
-        this.on('terminateThread', this.terminateThread.bind(this));
-        this.on('schedule', this.schedule.bind(this));
-        this.on('ipc', this.handleIPC.bind(this));
+        this.processTable = [];
+        this.currentProcessIndex = 0;
         console.log("Process Manager initialized.");
     }
 
-    createProcess(desiredAccess, objectAttributes, parentProcessId, inheritObjectTable, sectionHandle, debugPort, exceptionPort) {
-        const processId = this.nextProcessId++;
-        console.log(`Creating process ${processId}`);
-
-        const processInfo = {
-            id: processId,
-            access: desiredAccess,
-            attributes: objectAttributes,
-            parentId: parentProcessId,
-            status: 'created',
-            threads: [],
-            objectTable: inheritObjectTable ? this.processTable.get(parentProcessId).objectTable : {},
-            sectionHandle,
-            debugPort,
-            exceptionPort,
-            basePriority: 8,
-            activeThreads: 0,
-            cpuTime: 0
-        };
-
-        this.processTable.set(processId, processInfo);
-        this.readyProcessForExecution(processId);
-
-        return processId;
+    createProcess(pid, priority) {
+        const newProcess = new PCB(pid, ProcessState.NEW, priority, 0, {}, null);
+        this.processTable.push(newProcess);
+        newProcess.state = ProcessState.READY;
+        console.log(`Process ${pid} created and set to READY state.`);
+        return newProcess.pid;
     }
 
-    readyProcessForExecution(processId) {
-        const process = this.processTable.get(processId);
-        if (!process) {
-            console.error(`Process ${processId} not found`);
-            return;
-        }
-        process.status = 'ready';
-        console.log(`Process ${processId} is ready for execution`);
-        this.schedule();
-    }
-
-    terminateProcess(processId) {
-        console.log(`Terminating process ${processId}`);
-        const process = this.processTable.get(processId);
-        if (!process) {
-            console.error(`Process ${processId} not found`);
-            return;
-        }
-        process.status = 'terminated';
-        process.threads.forEach(threadId => this.terminateThread(threadId));
-        this.processTable.delete(processId);
-        console.log(`Process ${processId} terminated`);
-    }
-
-    createThread(processId, startAddress, stackSize, priority) {
-        const threadId = this.nextThreadId++;
-        console.log(`Creating thread ${threadId} for process ${processId}`);
-
-        const threadInfo = {
-            id: threadId,
-            processId: processId,
-            startAddress: startAddress,
-            stackSize: stackSize,
-            priority: priority,
-            status: 'ready',
-            cpuTime: 0
-        };
-
-        const process = this.processTable.get(processId);
-        if (!process) {
-            console.error(`Process ${processId} not found`);
-            return;
-        }
-
-        process.threads.push(threadId);
-        this.threadTable.set(threadId, threadInfo);
-        process.activeThreads++;
-        console.log(`Thread ${threadId} created for process ${processId}`);
-        this.schedule();
-    }
-
-    terminateThread(threadId) {
-        console.log(`Terminating thread ${threadId}`);
-        const thread = this.threadTable.get(threadId);
-        if (!thread) {
-            console.error(`Thread ${threadId} not found`);
-            return;
-        }
-        thread.status = 'terminated';
-        const process = this.processTable.get(thread.processId);
+    terminateProcess(pid) {
+        const process = this.processTable.find(p => p.pid === pid);
         if (process) {
-            process.threads = process.threads.filter(id => id !== threadId);
-            process.activeThreads--;
-        }
-        this.threadTable.delete(threadId);
-        console.log(`Thread ${threadId} terminated`);
-    }
-
-    schedule() {
-        console.log("Scheduling processes and threads...");
-        // Example logic: just run all ready threads in a round-robin fashion
-        for (let thread of this.threadTable.values()) {
-            if (thread.status === 'ready') {
-                this.runThread(thread);
-            }
-        }
-    }
-
-    runThread(thread) {
-        console.log(`Running thread ${thread.id} of process ${thread.processId}`);
-        thread.status = 'running';
-        setTimeout(() => {
-            thread.cpuTime += 1; // Simulate CPU time
-            thread.status = 'ready';
-            console.log(`Thread ${thread.id} of process ${thread.processId} completed its time slice`);
-        }, 1000); // Simulate a time slice of 1 second
-    }
-
-    handleIPC(message, senderProcessId, receiverProcessId) {
-        console.log(`Handling IPC message from ${senderProcessId} to ${receiverProcessId}: ${message}`);
-        const receiverProcess = this.processTable.get(receiverProcessId);
-        if (receiverProcess) {
-            // Simulate message delivery
-            receiverProcess.messageQueue = receiverProcess.messageQueue || [];
-            receiverProcess.messageQueue.push({ message, sender: senderProcessId });
-            console.log(`Message delivered to process ${receiverProcessId}`);
+            process.state = ProcessState.TERMINATED;
+            console.log(`Process ${pid} terminated.`);
         } else {
-            console.error(`Receiver process ${receiverProcessId} not found`);
+            console.error(`Process ${pid} not found.`);
         }
     }
 
-    getProcessInfo(processId) {
-        return this.processTable.get(processId);
+    roundRobinScheduling() {
+        const schedule = () => {
+            if (this.processTable.length === 0) {
+                console.log('No processes to schedule.');
+                return;
+            }
+
+            const currentProcess = this.processTable[this.currentProcessIndex];
+            if (currentProcess.state === ProcessState.READY || currentProcess.state === ProcessState.RUNNING) {
+                currentProcess.state = ProcessState.RUNNING;
+                console.log(`Running process ${currentProcess.pid}`);
+
+                // Simulate process execution for a time quantum
+                setTimeout(() => {
+                    currentProcess.state = ProcessState.READY;
+                    console.log(`Process ${currentProcess.pid} time quantum ended, switching context.`);
+
+                    // Move to the next process
+                    this.currentProcessIndex = (this.currentProcessIndex + 1) % this.processTable.length;
+                    schedule();
+                }, TIME_QUANTUM * 1000);
+            } else {
+                // Move to the next process if the current one is not ready/running
+                this.currentProcessIndex = (this.currentProcessIndex + 1) % this.processTable.length;
+                schedule();
+            }
+        };
+
+        // Start scheduling
+        schedule();
     }
 
-    getThreadInfo(threadId) {
-        return this.threadTable.get(threadId);
+    priorityScheduling() {
+        const schedule = () => {
+            if (this.processTable.length === 0) {
+                console.log('No processes to schedule.');
+                return;
+            }
+
+            // Sort processes by priority (higher priority first)
+            this.processTable.sort((a, b) => b.priority - a.priority);
+
+            for (const process of this.processTable) {
+                if (process.state === ProcessState.READY) {
+                    process.state = ProcessState.RUNNING;
+                    console.log(`Running process ${process.pid} with priority ${process.priority}`);
+
+                    // Simulate process execution
+                    setTimeout(() => {
+                        process.state = ProcessState.READY;
+                        console.log(`Process ${process.pid} execution completed, switching context.`);
+                        schedule();
+                    }, TIME_QUANTUM * 1000);
+                    break;
+                }
+            }
+        };
+
+        // Start scheduling
+        schedule();
+    }
+
+    sendMessage(pid, message) {
+        this.globalMessageQueue.sendMessage({ pid, message });
+    }
+
+    receiveMessage() {
+        return this.globalMessageQueue.receiveMessage();
+    }
+
+    listProcesses() {
+        return this.processTable;
     }
 }
 

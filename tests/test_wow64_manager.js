@@ -1,4 +1,4 @@
-const Wow64Manager = require('../wow64/wow64_manager');
+const Wow64Manager = require('../wow64/wow64.js');
 const wow64Manager = new Wow64Manager();
 
 function runWow64ManagerTests() {

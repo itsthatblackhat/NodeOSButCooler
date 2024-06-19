@@ -1,4 +1,7 @@
+const fs = require('fs');
+const path = require('path');
 const FileSystemManager = require('../filesys/filesystem_manager');
+
 const fileSystemManager = new FileSystemManager();
 const testDir = path.join(__dirname, 'test_dir');
 const testFile = path.join(testDir, 'test_file.txt');

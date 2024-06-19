@@ -1,5 +1,4 @@
 const fs = require('fs');
-const path = require('path');
 
 class IOManager {
     constructor() {
@@ -15,7 +14,6 @@ class IOManager {
 
     _setupFileSystem() {
         console.log("Setting up file system...");
-        // Simulate setting up the file system
     }
 
     createFile(filePath, options = 'w') {
@@ -89,36 +87,6 @@ class IOManager {
             console.error(`Error closing file with handle ${fileHandle}:`, error);
             throw error;
         }
-    }
-
-    handleIORequest(requestType, requestData) {
-        console.log(`Handling I/O request: ${requestType}`);
-        // Detailed I/O request handling logic
-        // Example: {'type': 'read', 'handle': 1, 'buffer': buffer, 'offset': 0, 'length': 100, 'position': 0}
-        switch (requestType) {
-            case 'read':
-                return this.readFile(requestData.handle, requestData.buffer, requestData.offset, requestData.length, requestData.position);
-            case 'write':
-                return this.writeFile(requestData.handle, requestData.buffer, requestData.offset, requestData.length, requestData.position);
-            case 'create':
-                return this.createFile(requestData.filePath, requestData.options);
-            case 'delete':
-                return this.deleteFile(requestData.filePath);
-            case 'close':
-                return this.closeFile(requestData.handle);
-            default:
-                throw new Error(`Unknown I/O request type: ${requestType}`);
-        }
-    }
-
-    manageDevices() {
-        console.log("Managing devices...");
-        // Detailed device management logic
-    }
-
-    handleFileSystem() {
-        console.log("Handling file system operations...");
-        // Detailed file system operations logic
     }
 }
 

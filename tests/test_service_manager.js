@@ -1,4 +1,4 @@
-const ServiceManager = require('../services/service_manager');
+const ServiceManager = require('../services/service_manager.js');
 const serviceManager = new ServiceManager();
 
 function runServiceManagerTests() {

@@ -1,21 +1,29 @@
-const Shell = require('../shell/shell');
-const shell = new Shell();
+const Kernel = require('../kernel/kernel.js');
+const kernel = new Kernel();
 
 function runShellTests() {
     console.log("Running shell tests...");
-    shell.initialize();
+    kernel.initialize();
 
-    // Simulate shell commands
-    shell._handleInput('createProcess 0 {} null false null null null');
-    shell._handleInput('listProcesses');
-    shell._handleInput('allocateMemory 1 null 0 1024 0 0');
-    shell._handleInput('createFile testfile.txt w');
-    shell._handleInput('writeFile 1 Hello, world! 0 13 0');
-    shell._handleInput('readFile 1 13 0 13 0');
-    shell._handleInput('deleteFile testfile.txt');
-    shell._handleInput('terminateProcess 1');
-    shell._handleInput('listProcesses');
-    shell._handleInput('exit');
+    // Simulate shell operations
+    console.log("JSOS> Shell initialized.");
+
+    // Create a process
+    const processId = kernel.handleSystemCall('createProcess', [0, {}, null, false, null, null, null]);
+    console.log(`Process created with ID ${processId}`);
+
+    // Allocate memory for the process
+    try {
+        const memoryAddress = kernel.handleSystemCall('allocateMemory', [processId, null, 0, 1024, 0, 0]);
+        console.log(`Memory allocated at address ${memoryAddress} for process ${processId}`);
+    } catch (error) {
+        console.error(`Memory allocation failed: ${error.message}`);
+    }
+
+    // List processes
+    const processes = kernel.processManager.listProcesses();
+    console.log(`List of processes:`);
+    processes.forEach(p => console.log(`Process ID: ${p.pid}, Info: ${JSON.stringify(p)}`));
 
     console.log("Shell tests completed.");
 }

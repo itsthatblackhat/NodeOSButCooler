@@ -1,4 +1,4 @@
-const InterruptManager = require('../kernel/interrupt_manager');
+const InterruptManager = require('../kernel/interrupt_manager.js');
 const interruptManager = new InterruptManager();
 
 function runInterruptManagerTests() {

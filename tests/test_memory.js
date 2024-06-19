@@ -1,4 +1,4 @@
-const MemoryManager = require('../memory/memory_manager');
+const MemoryManager = require('../memory/memory_manager.js');
 const memoryManager = new MemoryManager();
 
 function runMemoryTests() {

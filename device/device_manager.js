@@ -91,6 +91,17 @@ class DeviceManager {
         console.log("Listing all devices...");
         return Array.from(this.devices.values());
     }
+
+    // Plug and Play (PnP) functionality
+    plugDevice(deviceId, device) {
+        this.createDevice(device.name, device.type, device.characteristics);
+        console.log(`Plugged in device: ${deviceId}`);
+    }
+
+    unplugDevice(deviceId) {
+        this.deleteDevice(deviceId);
+        console.log(`Unplugged device: ${deviceId}`);
+    }
 }
 
 module.exports = DeviceManager;

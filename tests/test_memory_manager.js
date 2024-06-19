@@ -1,39 +1,33 @@
-const MemoryManager = require('../memory/memory_manager');
+// test_memory_manager.js
+
+const MemoryManager = require('../memory/memory_manager.js');
+
+// Initialize Memory Manager
 const memoryManager = new MemoryManager();
+memoryManager.initialize();
 
-function runMemoryManagerTests() {
-    console.log("Running memory manager tests...");
-    memoryManager.initialize();
+// Test Memory Allocation and Deallocation
+const processId = 1;
+const allocationSize = 1024 * 1024; // 1 MB
+const baseAddress = memoryManager.allocateVirtualMemory(processId, 0, 0, allocationSize, 'private', 'rw');
+console.log(`Allocated virtual memory at address ${baseAddress}`);
 
-    // Allocate memory for a process
-    const processId1 = 1;
-    const address1 = memoryManager.allocateVirtualMemory(processId1, null, 0, 256 * 1024 * 1024, 0, 0); // 256MB
-    console.log(`Memory allocated at address ${address1} for process ${processId1}`);
+memoryManager.freeVirtualMemory(processId, baseAddress, allocationSize, 'release');
+console.log(`Freed virtual memory at address ${baseAddress}`);
 
-    // Allocate more memory for the same process
-    const address2 = memoryManager.allocateVirtualMemory(processId1, null, 0, 128 * 1024 * 1024, 0, 0); // 128MB
-    console.log(`Memory allocated at address ${address2} for process ${processId1}`);
+// Test Paging
+const pageAddress = memoryManager.allocatePage();
+memoryManager.mapVirtualToPhysical(0x1000, pageAddress);
+const physicalAddress = memoryManager.getPhysicalAddress(0x1000);
+console.log(`Physical address for virtual address 0x1000: ${physicalAddress}`);
 
-    // Free some memory
-    memoryManager.freeVirtualMemory(processId1, address1, 256 * 1024 * 1024, 0);
-    console.log(`Memory freed at address ${address1} for process ${processId1}`);
+// Test Memory Protection
+memoryManager.protectMemory(baseAddress, allocationSize);
 
-    // Simulate a page fault
-    memoryManager.handlePageFault(address2 + 1024); // Access within allocated block
+// Test Memory Usage
+const memoryUsage = memoryManager.getMemoryUsage();
+console.log(`Memory Usage: Total: ${memoryUsage.totalMemory}, Free: ${memoryUsage.freeMemory}, Used: ${memoryUsage.usedMemory}`);
 
-    // Simulate memory swapping
-    memoryManager.swapOut(processId1);
-    memoryManager.swapIn(processId1);
-
-    // Display memory usage
-    const memoryUsage = memoryManager.getMemoryUsage();
-    console.log("Memory Usage:", memoryUsage);
-
-    // Display process memory info
-    const processMemoryInfo = memoryManager.getProcessMemoryInfo(processId1);
-    console.log(`Memory Info for Process ${processId1}:`, processMemoryInfo);
-
-    console.log("Memory manager tests completed.");
-}
-
-runMemoryManagerTests();
+// Test Process Memory Info
+const processMemoryInfo = memoryManager.getProcessMemoryInfo(processId);
+console.log(`Process Memory Info for Process ${processId}: ${JSON.stringify(processMemoryInfo)}`);
