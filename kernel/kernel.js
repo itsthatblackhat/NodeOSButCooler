@@ -6,7 +6,8 @@ const NetworkManager = require('../network/network_manager');
 const SecurityManager = require('../security/security_manager');
 const SubsystemManager = require('../subsys/subsys_manager');
 const SyscallManager = require('./syscall_manager');
-const FileSystemManager = require('../filesys/filesystem_manager'); // Import FileSystemManager
+const FileSystemManager = require('../filesys/filesystem_manager');
+const EventManager = require('../events/event_manager');
 
 class Kernel {
     constructor() {
@@ -17,7 +18,8 @@ class Kernel {
         this.networkManager = new NetworkManager();
         this.securityManager = new SecurityManager();
         this.subsystemManager = new SubsystemManager();
-        this.fileSystemManager = new FileSystemManager();
+        this.eventManager = new EventManager();
+        this.fileSystemManager = new FileSystemManager(this.eventManager);
         this.syscallManager = new SyscallManager(this);
     }
 
@@ -30,8 +32,10 @@ class Kernel {
         this.networkManager.initialize();
         this.securityManager.initialize();
         this.subsystemManager.initialize();
+        this.eventManager.initialize();
         this.fileSystemManager.initialize();
         this.syscallManager.initialize();
+        this.eventManager.emitEvent('kernelInitialized', {});
         console.log("Kernel initialized successfully.");
     }
 

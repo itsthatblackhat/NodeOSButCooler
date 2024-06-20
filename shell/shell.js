@@ -1,7 +1,5 @@
-// shell.js
 const readline = require('readline');
 const Kernel = require('../kernel/kernel.js');
-const fs = require('fs');
 
 class Shell {
     constructor() {
@@ -135,24 +133,28 @@ class Shell {
     }
 
     _createFile(args) {
-        const [filePath, content] = args;
-        this.kernel.fileSystemManager.createFile(filePath, content);
+        const [filePath, options] = args;
+        const fileHandle = this.kernel.handleSystemCall('createFile', [filePath, options]);
+        console.log(`File created with handle ${fileHandle}`);
     }
 
     _readFile(args) {
-        const [filePath] = args;
-        const content = this.kernel.fileSystemManager.readFile(filePath);
-        console.log(content);
+        const [fileHandle, buffer, offset, length, position] = args;
+        const bytesRead = this.kernel.handleSystemCall('readFile', [fileHandle, Buffer.alloc(parseInt(buffer)), parseInt(offset), parseInt(length), parseInt(position)]);
+        console.log(`Read ${bytesRead} bytes from file with handle ${fileHandle}`);
     }
 
     _writeFile(args) {
-        const [filePath, content] = args;
-        this.kernel.fileSystemManager.writeFile(filePath, content);
+        const [fileHandle, data, offset, length, position] = args;
+        const buffer = Buffer.from(data);
+        const bytesWritten = this.kernel.handleSystemCall('writeFile', [fileHandle, buffer, parseInt(offset), parseInt(length), parseInt(position)]);
+        console.log(`Wrote ${bytesWritten} bytes to file with handle ${fileHandle}`);
     }
 
     _deleteFile(args) {
         const [filePath] = args;
-        this.kernel.fileSystemManager.deleteFile(filePath);
+        this.kernel.handleSystemCall('deleteFile', [filePath]);
+        console.log(`File ${filePath} deleted`);
     }
 
     _listProcesses() {
@@ -165,10 +167,12 @@ class Shell {
 
     _dir(args) {
         const directoryPath = args[0] || '.';
-        const files = this.kernel.fileSystemManager.listFiles(directoryPath);
-        files.forEach(file => {
-            console.log(`FILE ${file}`);
-        });
+        const files = this.kernel.handleSystemCall('listFiles', [directoryPath]);
+        if (files) {
+            files.forEach(file => {
+                console.log(file);
+            });
+        }
     }
 
     _mkdir(args) {
@@ -177,12 +181,7 @@ class Shell {
             console.log('Usage: mkdir <directory>');
             return;
         }
-
-        if (fs.existsSync(dirPath)) {
-            console.log(`Directory ${dirPath} already exists.`);
-        } else {
-            this.kernel.fileSystemManager.createDirectory(dirPath);
-        }
+        this.kernel.handleSystemCall('createDirectory', [dirPath]);
     }
 
     _copy(args) {
@@ -206,7 +205,7 @@ class Shell {
             console.log('Usage: del <file>');
             return;
         }
-        this.kernel.fileSystemManager.deleteFile(filePath);
+        this.kernel.handleSystemCall('deleteFile', [filePath]);
     }
 
     _rmdir(args) {
@@ -215,12 +214,7 @@ class Shell {
             console.log('Usage: rmdir <directory>');
             return;
         }
-
-        if (!fs.existsSync(directoryPath)) {
-            console.log(`Directory ${directoryPath} does not exist.`);
-        } else {
-            this.kernel.fileSystemManager.deleteDirectory(directoryPath);
-        }
+        this.kernel.handleSystemCall('deleteDirectory', [directoryPath]);
     }
 
     _cls() {

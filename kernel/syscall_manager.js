@@ -17,10 +17,11 @@ class SyscallManager {
             'freeMemory': this.kernel.memoryManager.freeVirtualMemory.bind(this.kernel.memoryManager),
             'createProcess': this.kernel.processManager.createProcess.bind(this.kernel.processManager),
             'terminateProcess': this.kernel.processManager.terminateProcess.bind(this.kernel.processManager),
-            'createFile': this.kernel.ioManager.createFile.bind(this.kernel.ioManager),
-            'readFile': this.kernel.ioManager.readFile.bind(this.kernel.ioManager),
-            'writeFile': this.kernel.ioManager.writeFile.bind(this.kernel.ioManager),
-            'deleteFile': this.kernel.ioManager.deleteFile.bind(this.kernel.ioManager)
+            'createFile': this.kernel.fileSystemManager.createFile.bind(this.kernel.fileSystemManager),
+            'readFile': this.kernel.fileSystemManager.readFile.bind(this.kernel.fileSystemManager),
+            'writeFile': this.kernel.fileSystemManager.writeFile.bind(this.kernel.fileSystemManager),
+            'deleteFile': this.kernel.fileSystemManager.deleteFile.bind(this.kernel.fileSystemManager),
+            'listFiles': this.kernel.fileSystemManager.listFiles.bind(this.kernel.fileSystemManager),
             // Add other syscalls as needed
         };
     }

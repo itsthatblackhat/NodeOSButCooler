@@ -2,18 +2,21 @@ const fs = require('fs');
 const path = require('path');
 
 function dirCommand(args) {
-    const dirPath = args[0] || process.cwd();
-
-    try {
-        const files = fs.readdirSync(dirPath);
-        files.forEach(file => {
-            const filePath = path.join(dirPath, file);
-            const stats = fs.statSync(filePath);
-            console.log(`${stats.isDirectory() ? 'DIR' : 'FILE'} ${file}`);
-        });
-    } catch (error) {
-        console.error(`Error reading directory ${dirPath}:`, error.message);
+    const [dirPath = '.'] = args;
+    if (!fs.existsSync(dirPath)) {
+        console.log(`Directory ${dirPath} does not exist.`);
+        return;
     }
+    const files = fs.readdirSync(dirPath);
+    files.forEach(file => {
+        const fullPath = path.join(dirPath, file);
+        const stats = fs.statSync(fullPath);
+        if (stats.isFile()) {
+            console.log(`FILE ${file}`);
+        } else if (stats.isDirectory()) {
+            console.log(`DIR  ${file}`);
+        }
+    });
 }
 
 module.exports = dirCommand;

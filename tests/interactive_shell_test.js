@@ -1,4 +1,3 @@
-// interactive_shell_test.js
 const Shell = require('../shell/shell');
 
 const shell = new Shell();
@@ -10,7 +9,7 @@ shell.rl.on('line', (line) => {
 
     switch (command) {
         case 'dir':
-            shell._handleInput('dir');
+            shell._handleInput(`dir ${args.join(' ')}`);
             break;
         case 'mkdir':
             shell._handleInput(`mkdir ${args.join(' ')}`);
