@@ -1,3 +1,5 @@
+const crypto = require('crypto');
+
 class SecurityManager {
     constructor() {
         this.users = new Map();
@@ -7,19 +9,32 @@ class SecurityManager {
     initialize() {
         console.log("Initializing Security Manager...");
         this._setupDefaultUsers();
+        this._setupDefaultPermissions();
         console.log("Security Manager initialized.");
     }
 
     _setupDefaultUsers() {
         console.log("Setting up default users...");
-        // Simulate setting up default users and permissions
-        this.users.set('admin', { password: 'admin123', role: 'admin' });
-        this.users.set('user', { password: 'user123', role: 'user' });
+        // Default users with hashed passwords
+        this.users.set('admin', { password: this._hashPassword('admin123'), role: 'admin' });
+        this.users.set('user', { password: this._hashPassword('user123'), role: 'user' });
+    }
+
+    _setupDefaultPermissions() {
+        console.log("Setting up default permissions...");
+        // Default permissions
+        this.permissions.set('admin', ['read', 'write', 'delete']);
+        this.permissions.set('user', ['read']);
+    }
+
+    _hashPassword(password) {
+        return crypto.createHash('sha256').update(password).digest('hex');
     }
 
     authenticate(username, password) {
         const user = this.users.get(username);
-        if (user && user.password === password) {
+        const hashedPassword = this._hashPassword(password);
+        if (user && user.password === hashedPassword) {
             console.log(`User ${username} authenticated successfully.`);
             return true;
         } else {
@@ -32,7 +47,8 @@ class SecurityManager {
         if (this.users.has(username)) {
             throw new Error(`User ${username} already exists.`);
         }
-        this.users.set(username, { password, role });
+        const hashedPassword = this._hashPassword(password);
+        this.users.set(username, { password: hashedPassword, role });
         console.log(`User ${username} added successfully.`);
     }
 
@@ -63,19 +79,15 @@ class SecurityManager {
         }
     }
 
-    // Secure Inter-Process Communication (IPC)
     secureIPC(sender, receiver, message) {
         console.log(`Securing IPC from ${sender} to ${receiver}`);
-        // Simulate securing the message
         const encryptedMessage = `encrypted(${message})`;
         console.log(`Encrypted message: ${encryptedMessage}`);
-        // Simulate sending the secured message
         this.sendMessage(receiver, encryptedMessage);
     }
 
     sendMessage(receiver, message) {
         console.log(`Sending message to ${receiver}: ${message}`);
-        // Simulate message sending
     }
 }
 

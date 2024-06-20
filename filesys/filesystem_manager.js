@@ -1,3 +1,4 @@
+// filesystem_manager.js
 const fs = require('fs');
 const path = require('path');
 
@@ -42,14 +43,22 @@ class FileSystemManager {
 
     createDirectory(dirPath) {
         console.log(`Creating directory: ${dirPath}`);
-        fs.mkdirSync(dirPath, { recursive: true });
-        console.log(`Directory created: ${dirPath}`);
+        if (!fs.existsSync(dirPath)) {
+            fs.mkdirSync(dirPath, { recursive: true });
+            console.log(`Directory created: ${dirPath}`);
+        } else {
+            console.log(`Directory ${dirPath} already exists.`);
+        }
     }
 
     deleteDirectory(dirPath) {
         console.log(`Deleting directory: ${dirPath}`);
-        fs.rmdirSync(dirPath, { recursive: true });
-        console.log(`Directory deleted: ${dirPath}`);
+        if (fs.existsSync(dirPath)) {
+            fs.rmdirSync(dirPath, { recursive: true });
+            console.log(`Directory deleted: ${dirPath}`);
+        } else {
+            console.log(`Directory ${dirPath} does not exist.`);
+        }
     }
 
     listFiles(dirPath) {

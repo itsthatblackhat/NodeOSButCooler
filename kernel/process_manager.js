@@ -150,6 +150,26 @@ class ProcessManager {
     listProcesses() {
         return this.processTable;
     }
+
+    suspendProcess(pid) {
+        const process = this.processTable.find(p => p.pid === pid);
+        if (process && process.state === ProcessState.RUNNING) {
+            process.state = ProcessState.WAITING;
+            console.log(`Process ${pid} suspended.`);
+        } else {
+            console.error(`Process ${pid} not found or not running.`);
+        }
+    }
+
+    resumeProcess(pid) {
+        const process = this.processTable.find(p => p.pid === pid);
+        if (process && process.state === ProcessState.WAITING) {
+            process.state = ProcessState.READY;
+            console.log(`Process ${pid} resumed.`);
+        } else {
+            console.error(`Process ${pid} not found or not suspended.`);
+        }
+    }
 }
 
 module.exports = ProcessManager;

@@ -1,3 +1,5 @@
+// d:\JSOS\memory\memory_manager.js
+
 class MemoryManager {
     constructor() {
         this.memoryMap = new Map(); // Maps processId to an array of memory blocks
@@ -142,8 +144,9 @@ class MemoryManager {
     }
 
     // Memory protection and isolation
-    protectMemory(address, size) {
-        console.log(`Protected ${size} bytes at address ${address}`);
+    protectMemory(address, size, protectionFlags) {
+        console.log(`Protected ${size} bytes at address ${address} with flags ${protectionFlags}`);
+        // Implement the logic to set the appropriate protection flags
     }
 }
 

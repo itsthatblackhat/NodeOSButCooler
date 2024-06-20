@@ -92,6 +92,11 @@ class RegistryManager {
         }
         return Object.keys(this.registryData[key]);
     }
+
+    closeKey(key) {
+        // Placeholder for closing a key
+        console.log(`Registry key ${key} closed.`);
+    }
 }
 
 module.exports = RegistryManager;
