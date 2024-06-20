@@ -78,6 +78,39 @@ class FileSystemManager {
         console.log(`Directory deleted: ${dirPath}`);
     }
 
+    moveFile(sourcePath, destinationPath) {
+        console.log(`Moving file from ${sourcePath} to ${destinationPath}`);
+        if (!fs.existsSync(sourcePath)) {
+            console.log(`File ${sourcePath} does not exist.`);
+            return;
+        }
+        fs.renameSync(sourcePath, destinationPath);
+        this.eventManager.emitEvent('fileMoved', { sourcePath, destinationPath });
+        console.log(`File moved from ${sourcePath} to ${destinationPath}`);
+    }
+
+    copyFile(sourcePath, destinationPath) {
+        console.log(`Copying file from ${sourcePath} to ${destinationPath}`);
+        if (!fs.existsSync(sourcePath)) {
+            console.log(`File ${sourcePath} does not exist.`);
+            return;
+        }
+        fs.copyFileSync(sourcePath, destinationPath);
+        this.eventManager.emitEvent('fileCopied', { sourcePath, destinationPath });
+        console.log(`File copied from ${sourcePath} to ${destinationPath}`);
+    }
+
+    renameFile(oldPath, newPath) {
+        console.log(`Renaming file from ${oldPath} to ${newPath}`);
+        if (!fs.existsSync(oldPath)) {
+            console.log(`File ${oldPath} does not exist.`);
+            return;
+        }
+        fs.renameSync(oldPath, newPath);
+        this.eventManager.emitEvent('fileRenamed', { oldPath, newPath });
+        console.log(`File renamed from ${oldPath} to ${newPath}`);
+    }
+
     listFiles(dirPath) {
         console.log(`Listing files in directory: ${dirPath}`);
         if (!fs.existsSync(dirPath)) {

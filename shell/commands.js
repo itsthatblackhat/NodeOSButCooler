@@ -1,8 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
-function dirCommand() {
-    const files = fs.readdirSync('.');
+function dirCommand(args) {
+    const directoryPath = args[0] || '.';
+    const files = fs.readdirSync(directoryPath);
     files.forEach(file => {
         const stats = fs.statSync(file);
         if (stats.isFile()) {

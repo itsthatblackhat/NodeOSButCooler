@@ -1,14 +1,23 @@
 const readline = require('readline');
 const Kernel = require('../kernel/kernel.js');
+const commands = require('./commands');
+const fs = require('fs');
+const path = require('path');
 
 class Shell {
-    constructor() {
-        this.kernel = new Kernel();
+    constructor(fileSystemManager) {
+        this.kernel = new Kernel(fileSystemManager);
         this.rl = readline.createInterface({
             input: process.stdin,
             output: process.stdout,
             prompt: 'JSOS> '
         });
+        this.currentDir = process.cwd();
+        this.commandQueue = [];
+        this.processingCommand = false;
+
+        // Bind the method to the instance
+        this._handleInput = this._handleInput.bind(this);
     }
 
     initialize() {
@@ -70,37 +79,28 @@ class Shell {
                 this._dir(args);
                 break;
             case 'mkdir':
-                this._mkdir(args);
+                commands.mkdirCommand(args);
                 break;
             case 'copy':
-                this._copy(args);
+                commands.copyCommand(args);
                 break;
             case 'del':
-                this._del(args);
+                commands.delCommand(args);
                 break;
             case 'rmdir':
-                this._rmdir(args);
+                commands.rmdirCommand(args);
                 break;
             case 'cls':
-                this._cls();
+                commands.clsCommand();
                 break;
             case 'pause':
-                this._pause();
+                commands.pauseCommand(() => this.rl.prompt());
                 break;
-            case 'type':
-                this._type(args);
+            case 'echo':
+                this._echo(args);
                 break;
-            case 'rename':
-                this._rename(args);
-                break;
-            case 'move':
-                this._move(args);
-                break;
-            case 'attrib':
-                this._attrib(args);
-                break;
-            case 'xcopy':
-                this._xcopy(args);
+            case 'cd':
+                this._cd(args);
                 break;
             default:
                 console.log(`Unknown command: ${command}`);
@@ -167,165 +167,33 @@ class Shell {
 
     _dir(args) {
         const directoryPath = args[0] || '.';
-        const files = this.kernel.handleSystemCall('listFiles', [directoryPath]);
-        if (files) {
-            files.forEach(file => {
-                console.log(file);
-            });
-        }
+        const files = fs.readdirSync(directoryPath);
+        files.forEach(file => {
+            const stats = fs.statSync(file);
+            if (stats.isFile()) {
+                console.log(`FILE ${file}`);
+            } else if (stats.isDirectory()) {
+                console.log(`DIR  ${file}`);
+            }
+        });
     }
 
-    _mkdir(args) {
+    _echo(args) {
+        console.log(args.join(' '));
+    }
+
+    _cd(args) {
         const [dirPath] = args;
         if (!dirPath) {
-            console.log('Usage: mkdir <directory>');
+            console.log(process.cwd());
             return;
         }
-        this.kernel.handleSystemCall('createDirectory', [dirPath]);
-    }
-
-    _copy(args) {
-        const [src, dest] = args;
-        if (!src || !dest) {
-            console.log('Usage: copy <source> <destination>');
-            return;
+        try {
+            process.chdir(dirPath);
+            console.log(`New directory: ${process.cwd()}`);
+        } catch (err) {
+            console.log(`chdir: ${err.message}`);
         }
-        fs.copyFile(src, dest, (err) => {
-            if (err) {
-                console.error(`Error copying file from ${src} to ${dest}:`, err);
-            } else {
-                console.log(`Copied ${src} to ${dest}`);
-            }
-        });
-    }
-
-    _del(args) {
-        const filePath = args[0];
-        if (!filePath) {
-            console.log('Usage: del <file>');
-            return;
-        }
-        this.kernel.handleSystemCall('deleteFile', [filePath]);
-    }
-
-    _rmdir(args) {
-        const directoryPath = args[0];
-        if (!directoryPath) {
-            console.log('Usage: rmdir <directory>');
-            return;
-        }
-        this.kernel.handleSystemCall('deleteDirectory', [directoryPath]);
-    }
-
-    _cls() {
-        process.stdout.write('\u001b[2J\u001b[0;0H');
-    }
-
-    _pause() {
-        console.log('Press any key to continue...');
-        process.stdin.setRawMode(true);
-        process.stdin.resume();
-        process.stdin.on('data', () => {
-            process.stdin.setRawMode(false);
-            process.stdin.pause();
-            this.rl.prompt();
-        });
-    }
-
-    _type(args) {
-        const filePath = args[0];
-        if (!filePath) {
-            console.log('Usage: type <file>');
-            return;
-        }
-        fs.readFile(filePath, 'utf8', (err, data) => {
-            if (err) {
-                console.error(`Error reading file ${filePath}:`, err);
-            } else {
-                console.log(data);
-            }
-        });
-    }
-
-    _rename(args) {
-        const [oldPath, newPath] = args;
-        if (!oldPath || !newPath) {
-            console.log('Usage: rename <oldName> <newName>');
-            return;
-        }
-        fs.rename(oldPath, newPath, (err) => {
-            if (err) {
-                console.error(`Error renaming ${oldPath} to ${newPath}:`, err);
-            } else {
-                console.log(`Renamed ${oldPath} to ${newPath}`);
-            }
-        });
-    }
-
-    _move(args) {
-        this._copy(args);
-        this._del([args[0]]);
-    }
-
-    _attrib(args) {
-        const filePath = args[0];
-        if (!filePath) {
-            console.log('Usage: attrib <file>');
-            return;
-        }
-        fs.stat(filePath, (err, stats) => {
-            if (err) {
-                console.error(`Error getting attributes for ${filePath}:`, err);
-            } else {
-                console.log(`Attributes of ${filePath}:`);
-                console.log(`  Size: ${stats.size} bytes`);
-                console.log(`  Created: ${stats.birthtime}`);
-                console.log(`  Modified: ${stats.mtime}`);
-                console.log(`  Accessed: ${stats.atime}`);
-            }
-        });
-    }
-
-    _xcopy(args) {
-        const [src, dest] = args;
-        if (!src || !dest) {
-            console.log('Usage: xcopy <source> <destination>');
-            return;
-        }
-        const copyRecursive = (src, dest) => {
-            fs.stat(src, (err, stats) => {
-                if (err) {
-                    console.error(`Error getting stats for ${src}:`, err);
-                    return;
-                }
-                if (stats.isDirectory()) {
-                    fs.mkdir(dest, { recursive: true }, (err) => {
-                        if (err) {
-                            console.error(`Error creating directory ${dest}:`, err);
-                            return;
-                        }
-                        fs.readdir(src, (err, files) => {
-                            if (err) {
-                                console.error(`Error reading directory ${src}:`, err);
-                                return;
-                            }
-                            files.forEach(file => {
-                                copyRecursive(path.join(src, file), path.join(dest, file));
-                            });
-                        });
-                    });
-                } else {
-                    fs.copyFile(src, dest, (err) => {
-                        if (err) {
-                            console.error(`Error copying file from ${src} to ${dest}:`, err);
-                        } else {
-                            console.log(`Copied ${src} to ${dest}`);
-                        }
-                    });
-                }
-            });
-        };
-        copyRecursive(src, dest);
     }
 }
 
