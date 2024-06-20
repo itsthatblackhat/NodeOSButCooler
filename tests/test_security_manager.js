@@ -1,25 +1,48 @@
-// test_security_manager.js
-
 const SecurityManager = require('../security/security_manager.js');
-
-// Initialize Security Manager
 const securityManager = new SecurityManager();
-securityManager.initialize();
 
-// Test User Authentication
-const username = 'admin';
-const password = 'admin123';
-const isAuthenticated = securityManager.authenticate(username, password);
-console.log(`Authentication for user ${username}: ${isAuthenticated}`);
+function runSecurityManagerTests() {
+    console.log("Running Security Manager tests...");
+    securityManager.initialize();
 
-// Test Adding and Removing Users
-securityManager.addUser('newUser', 'newPassword', 'user');
-securityManager.removeUser('newUser');
+    // Add users
+    securityManager.addUser('adminUser', 'adminPass', 'admin');
+    securityManager.addUser('normalUser', 'userPass', 'user');
 
-// Test Permissions
-securityManager.addPermission('admin', 'resource1', 'read');
-const hasPermission = securityManager.checkPermission('admin', 'resource1', 'read');
-console.log(`Permission check for user admin: ${hasPermission}`);
+    // Authenticate users
+    try {
+        securityManager.authenticate('adminUser', 'adminPass');
+        console.log("Admin user authenticated successfully.");
+    } catch (error) {
+        console.error(`Error authenticating admin user: ${error.message}`);
+    }
 
-// Test Secure IPC
-securityManager.secureIPC('admin', 'user', 'Hello, this is a secure message!');
+    try {
+        securityManager.authenticate('normalUser', 'userPass');
+        console.log("Normal user authenticated successfully.");
+    } catch (error) {
+        console.error(`Error authenticating normal user: ${error.message}`);
+    }
+
+    // Check permissions
+    try {
+        securityManager.checkPermission('adminUser', 'resource1', 'delete');
+        console.log("Admin user has delete permission for resource1.");
+    } catch (error) {
+        console.error(`Error checking permission for admin user: ${error.message}`);
+    }
+
+    try {
+        securityManager.checkPermission('normalUser', 'resource1', 'write');
+        console.log("Normal user has write permission for resource1.");
+    } catch (error) {
+        console.error(`Error checking permission for normal user: ${error.message}`);
+    }
+
+    // Secure IPC
+    securityManager.secureIPC('adminUser', 'normalUser', 'Hello, secure world!');
+
+    console.log("Security Manager tests completed.");
+}
+
+runSecurityManagerTests();

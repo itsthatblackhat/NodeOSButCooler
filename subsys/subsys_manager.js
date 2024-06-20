@@ -1,5 +1,6 @@
-const CSRSS = require('./csrss.js');
-const SMSS = require('./smss.js');
+const Win32Subsystem = require('./win32_subsystem');
+const CSRSS = require('./csrss');
+const SMSS = require('./smss');
 
 class SubsystemManager {
     constructor() {
@@ -23,6 +24,7 @@ class SubsystemManager {
 
         this._initializeSubsystem('CSRSS', CSRSS);
         this._initializeSubsystem('SMSS', SMSS);
+        this._initializeSubsystem('Win32', Win32Subsystem);
 
         // Additional subsystems can be initialized here
     }

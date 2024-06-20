@@ -6,33 +6,63 @@ function runRegistryManagerTests() {
     registryManager.initialize();
 
     // Create a key
-    registryManager.createKey('HKEY_LOCAL_MACHINE\\Software\\Test');
+    try {
+        registryManager.createKey('HKEY_LOCAL_MACHINE', 'Software\\Test');
+        console.log('Registry key created.');
+    } catch (error) {
+        console.error('Error creating registry key:', error);
+    }
 
     // Set values
-    registryManager.setValue('HKEY_LOCAL_MACHINE\\Software\\Test', 'Version', '1.0.0');
-    registryManager.setValue('HKEY_LOCAL_MACHINE\\Software\\Test', 'Author', 'NodeOS Developer');
+    try {
+        registryManager.setValue('HKEY_LOCAL_MACHINE', 'Software\\Test', 'Version', '1.0.0');
+        registryManager.setValue('HKEY_LOCAL_MACHINE', 'Software\\Test', 'Author', 'NodeOS Developer');
+        console.log('Registry values set.');
+    } catch (error) {
+        console.error('Error setting registry values:', error);
+    }
 
     // Get values
-    const version = registryManager.getValue('HKEY_LOCAL_MACHINE\\Software\\Test', 'Version');
-    console.log(`Version: ${version}`);
-    const author = registryManager.getValue('HKEY_LOCAL_MACHINE\\Software\\Test', 'Author');
-    console.log(`Author: ${author}`);
+    try {
+        const version = registryManager.getValue('HKEY_LOCAL_MACHINE', 'Software\\Test', 'Version');
+        console.log(`Version: ${version}`);
+        const author = registryManager.getValue('HKEY_LOCAL_MACHINE', 'Software\\Test', 'Author');
+        console.log(`Author: ${author}`);
+    } catch (error) {
+        console.error('Error getting registry values:', error);
+    }
 
     // List keys
-    const keys = registryManager.listKeys();
-    console.log("Keys:", keys);
+    try {
+        const keys = registryManager.listKeys('HKEY_LOCAL_MACHINE');
+        console.log("Keys:", keys);
+    } catch (error) {
+        console.error('Error listing registry keys:', error);
+    }
 
     // List values
-    const values = registryManager.listValues('HKEY_LOCAL_MACHINE\\Software\\Test');
-    console.log("Values for HKEY_LOCAL_MACHINE\\Software\\Test:", values);
+    try {
+        const values = registryManager.listValues('HKEY_LOCAL_MACHINE', 'Software\\Test');
+        console.log("Values for HKEY_LOCAL_MACHINE\\Software\\Test:", values);
+    } catch (error) {
+        console.error('Error listing registry values:', error);
+    }
 
     // Delete a value
-    registryManager.deleteValue('HKEY_LOCAL_MACHINE\\Software\\Test', 'Author');
-    console.log("Deleted value 'Author'.");
+    try {
+        registryManager.deleteValue('HKEY_LOCAL_MACHINE', 'Software\\Test', 'Author');
+        console.log("Deleted value 'Author'.");
+    } catch (error) {
+        console.error('Error deleting registry value:', error);
+    }
 
     // Delete a key
-    registryManager.deleteKey('HKEY_LOCAL_MACHINE\\Software\\Test');
-    console.log("Deleted key 'HKEY_LOCAL_MACHINE\\Software\\Test'.");
+    try {
+        registryManager.deleteKey('HKEY_LOCAL_MACHINE', 'Software\\Test');
+        console.log("Deleted key 'HKEY_LOCAL_MACHINE\\Software\\Test'.");
+    } catch (error) {
+        console.error('Error deleting registry key:', error);
+    }
 
     console.log("Registry manager tests completed.");
 }

@@ -2,7 +2,7 @@ const Wow64Manager = require('../wow64/wow64.js');
 const wow64Manager = new Wow64Manager();
 
 function runWow64ManagerTests() {
-    console.log("Running Wow64 manager tests...");
+    console.log("Running Wow64 Manager tests...");
     wow64Manager.initialize();
 
     // Create a 32-bit process
@@ -25,6 +25,14 @@ function runWow64ManagerTests() {
     wow64Manager.handle32BitSystemCall(processId, 'freeMemory', [memoryAddress, 1024]);
     console.log(`Memory at address ${memoryAddress} for process ${processId} freed`);
 
+    // Create a thread
+    const threadId = wow64Manager.handle32BitSystemCall(processId, 'createThread', [memoryAddress, null]);
+    console.log(`Thread created with ID ${threadId} in process ${processId}`);
+
+    // Terminate the thread
+    wow64Manager.handle32BitSystemCall(processId, 'terminateThread', [threadId]);
+    console.log(`Thread with ID ${threadId} in process ${processId} terminated`);
+
     // List all 32-bit processes
     const processes = wow64Manager.list32BitProcesses();
     console.log("32-bit processes:", processes);
@@ -33,7 +41,7 @@ function runWow64ManagerTests() {
     wow64Manager.terminate32BitProcess(processId);
     console.log(`32-bit process ${processId} terminated`);
 
-    console.log("Wow64 manager tests completed.");
+    console.log("Wow64 Manager tests completed.");
 }
 
 runWow64ManagerTests();

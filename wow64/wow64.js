@@ -69,6 +69,10 @@ class Wow64Manager {
                 return this._allocateMemory(process, ...args);
             case 'freeMemory':
                 return this._freeMemory(process, ...args);
+            case 'createThread':
+                return this._createThread(process, ...args);
+            case 'terminateThread':
+                return this._terminateThread(process, ...args);
             default:
                 throw new Error(`Unknown 32-bit system call ID: ${sysCallId}`);
         }
@@ -96,6 +100,24 @@ class Wow64Manager {
     _freeMemory(process, address, size) {
         console.log(`Freeing ${size} bytes of memory at address ${address} in 32-bit process ${process.id}`);
         // Simulate memory freeing in 32-bit process
+    }
+
+    _createThread(process, startAddress, param) {
+        const threadId = process.threads.length + 1;
+        console.log(`Creating thread ${threadId} in 32-bit process ${process.id}`);
+        // Simulate thread creation logic
+        process.threads.push({ id: threadId, startAddress, param, status: 'running' });
+        return threadId;
+    }
+
+    _terminateThread(process, threadId) {
+        console.log(`Terminating thread ${threadId} in 32-bit process ${process.id}`);
+        const thread = process.threads.find(t => t.id === threadId);
+        if (!thread) {
+            throw new Error(`Thread with ID ${threadId} not found in process ${process.id}`);
+        }
+        thread.status = 'terminated';
+        process.threads = process.threads.filter(t => t.id !== threadId);
     }
 
     list32BitProcesses() {
