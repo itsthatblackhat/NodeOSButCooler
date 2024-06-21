@@ -1,19 +1,19 @@
+const assert = require('assert');
 const ntfsBoot = require('../kernel/ntfs_boot');
 
-function runNtfsBootTests() {
-    console.log("Running NTFS boot tests...");
-
-    // Set environment variable to use mock
-    process.env.USE_MOCK = 'true';
+function runTests() {
+    console.log("Running NTFS Boot Tests...");
 
     try {
-        ntfsBoot.ntfsBoot('/dev/sda');
-        console.log("NTFS boot process completed successfully.");
-    } catch (error) {
-        console.error("NTFS boot process failed:", error.message);
-    }
+        // Test: should load NTLDR successfully
+        const result = ntfsBoot.loadNTLDR();
+        assert.strictEqual(result, true, 'NTLDR should load successfully');
+        console.log("Test passed: NTLDR should load successfully");
 
-    console.log("NTFS boot tests completed.");
+        // Add more tests as needed
+    } catch (error) {
+        console.error("Test failed:", error.message);
+    }
 }
 
-runNtfsBootTests();
+runTests();

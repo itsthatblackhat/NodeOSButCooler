@@ -1,46 +1,46 @@
 const fs = require('fs');
+const path = require('path');
 
-// Mock function to simulate reading the boot sector
-function readBootSectorMock() {
-    const buffer = Buffer.alloc(512);
-    // Fill the buffer with mock data (e.g., '0x90' for NOP instruction)
-    buffer.fill(0x90);
-    return buffer;
-}
+function loadNTLDR() {
+    console.log("Loading NTLDR...");
 
-function loadBootstrapCode(buffer) {
-    // Placeholder for loading bootstrap code
-    console.log("Loading bootstrap code...");
-    // Actual implementation would go here
-}
+    // Define segments (simulated as variables)
+    let BootSeg = Buffer.alloc(512); // Simulate the initial boot sector
+    let NewSeg = Buffer.alloc(512 * 16); // Simulate relocation segment
+    let LdrSeg = Buffer.alloc(1024 * 64); // Simulate NTLDR load segment
 
-function ntfsBoot(devicePath) {
-    console.log("Starting NTFS boot process...");
-    let bootSector;
-
-    if (process.env.USE_MOCK) {
-        bootSector = readBootSectorMock();
+    // Read the boot sector from a file (simulated)
+    const bootSectorPath = path.join(__dirname, 'bootsector.bin');
+    console.log("Checking for boot sector at:", bootSectorPath);
+    if (fs.existsSync(bootSectorPath)) {
+        BootSeg = fs.readFileSync(bootSectorPath);
+        console.log("Boot sector loaded successfully.");
     } else {
-        bootSector = readBootSector(devicePath);
+        console.error("Boot sector file not found at", bootSectorPath);
+        return false;
     }
 
-    loadBootstrapCode(bootSector);
-    console.log("Boot process initialized.");
+    // Relocate boot sector to NewSeg
+    NewSeg = Buffer.from(BootSeg);
+    console.log("Boot sector relocated successfully.");
+
+    // Load NTLDR into LdrSeg (simulated)
+    const ntldrPath = path.join(__dirname, 'NTLDR');
+    console.log("Checking for NTLDR at:", ntldrPath);
+    if (fs.existsSync(ntldrPath)) {
+        LdrSeg = fs.readFileSync(ntldrPath);
+        console.log("NTLDR loaded successfully.");
+    } else {
+        console.error("NTLDR file not found at", ntldrPath);
+        return false;
+    }
+
+    // Transfer control to NTLDR (simulated)
+    console.log("Transferring control to NTLDR...");
+
+    return true;
 }
 
-// Mocked readBootSector function
-function readBootSector(devicePath) {
-    const buffer = Buffer.alloc(512); // NTFS boot sector size
-    const fd = fs.openSync(devicePath, 'r');
-    fs.readSync(fd, buffer, 0, 512, 0);
-    fs.closeSync(fd);
-    return buffer;
-}
-
-// Export functions for testing
 module.exports = {
-    ntfsBoot,
-    readBootSector,
-    loadBootstrapCode,
-    readBootSectorMock
+    loadNTLDR
 };

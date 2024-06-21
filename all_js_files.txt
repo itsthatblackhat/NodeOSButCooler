@@ -1,0 +1,5813 @@
+===================================================
+[d:\JSOS\api\api.js]
+
+class API {
+    translateSystemCalls(call, params) {
+        console.log(`Translating system call: ${call} with params: ${params}`);
+        switch(call) {
+            case 'CreateFile':
+                return this.createFile(params);
+            case 'DeleteFile':
+                return this.deleteFile(params);
+            default:
+                throw new Error(`Unsupported system call: ${call}`);
+        }
+    }
+
+    handleAPICalls(api, params) {
+        console.log(`Handling API call: ${api} with params: ${params}`);
+        switch(api) {
+            case 'GetSystemTime':
+                return this.getSystemTime(params);
+            case 'SetSystemTime':
+                return this.setSystemTime(params);
+            default:
+                throw new Error(`Unsupported API call: ${api}`);
+        }
+    }
+
+    createFile(params) {
+        console.log(`Creating file with params: ${params}`);
+    }
+
+    deleteFile(params) {
+        console.log(`Deleting file with params: ${params}`);
+    }
+
+    getSystemTime(params) {
+        console.log(`Getting system time with params: ${params}`);
+    }
+
+    setSystemTime(params) {
+        console.log(`Setting system time with params: ${params}`);
+    }
+}
+
+module.exports = new API();
+
+===================================================
+===================================================
+[d:\JSOS\authentication\authentication_manager.js]
+
+const crypto = require('crypto');
+
+class AuthenticationManager {
+    constructor() {
+        this.users = new Map(); // Maps username to user information (password hash, salt, session info)
+        this.sessions = new Map(); // Maps sessionId to username
+        this.nextSessionId = 1;
+    }
+
+    initialize() {
+        console.log("Initializing Authentication Manager...");
+        this._setupUsers();
+        console.log("Authentication Manager initialized.");
+    }
+
+    _setupUsers() {
+        console.log("Setting up user database...");
+        // Simulate setting up initial users
+        this._addUser('admin', 'password');
+    }
+
+    _addUser(username, password) {
+        const salt = crypto.randomBytes(16).toString('hex');
+        const hash = this._hashPassword(password, salt);
+        this.users.set(username, { hash, salt });
+    }
+
+    _hashPassword(password, salt) {
+        return crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+    }
+
+    authenticate(username, password) {
+        const user = this.users.get(username);
+        if (!user) {
+            throw new Error('User not found');
+        }
+        const hash = this._hashPassword(password, user.salt);
+        if (hash !== user.hash) {
+            throw new Error('Invalid password');
+        }
+        return true;
+    }
+
+    login(username, password) {
+        if (this.authenticate(username, password)) {
+            const sessionId = this.nextSessionId++;
+            this.sessions.set(sessionId, username);
+            return sessionId;
+        }
+    }
+
+    logout(sessionId) {
+        if (!this.sessions.has(sessionId)) {
+            throw new Error('Invalid session');
+        }
+        this.sessions.delete(sessionId);
+    }
+
+    isAuthenticated(sessionId) {
+        return this.sessions.has(sessionId);
+    }
+
+    getUsername(sessionId) {
+        return this.sessions.get(sessionId);
+    }
+
+    changePassword(username, oldPassword, newPassword) {
+        if (this.authenticate(username, oldPassword)) {
+            const salt = crypto.randomBytes(16).toString('hex');
+            const hash = this._hashPassword(newPassword, salt);
+            this.users.set(username, { hash, salt });
+        }
+    }
+
+    deleteUser(username) {
+        if (!this.users.has(username)) {
+            throw new Error('User not found');
+        }
+        this.users.delete(username);
+    }
+}
+
+module.exports = AuthenticationManager;
+
+===================================================
+===================================================
+[d:\JSOS\configuration\configuration_manager.js]
+
+const fs = require('fs');
+const path = require('path');
+
+class ConfigurationManager {
+    constructor() {
+        this.configFilePath = path.join(__dirname, 'config.json');
+        this.configData = {};
+    }
+
+    initialize() {
+        console.log("Initializing Configuration Manager...");
+        this._loadConfiguration();
+        console.log("Configuration Manager initialized.");
+    }
+
+    _loadConfiguration() {
+        try {
+            if (fs.existsSync(this.configFilePath)) {
+                const data = fs.readFileSync(this.configFilePath, 'utf8');
+                this.configData = JSON.parse(data);
+                console.log("Configuration loaded from file.");
+            } else {
+                this.configData = {};
+                console.log("No configuration file found, starting with default configuration.");
+            }
+        } catch (error) {
+            console.error("Failed to load configuration:", error);
+            this.configData = {};
+        }
+    }
+
+    _saveConfiguration() {
+        try {
+            const data = JSON.stringify(this.configData, null, 2);
+            fs.writeFileSync(this.configFilePath, data, 'utf8');
+            console.log("Configuration saved to file.");
+        } catch (error) {
+            console.error("Failed to save configuration:", error);
+        }
+    }
+
+    setConfig(key, value) {
+        this.configData[key] = value;
+        this._saveConfiguration();
+        console.log(`Configuration setting "${key}" set to "${value}".`);
+    }
+
+    getConfig(key) {
+        return this.configData[key];
+    }
+
+    deleteConfig(key) {
+        delete this.configData[key];
+        this._saveConfiguration();
+        console.log(`Configuration setting "${key}" deleted.`);
+    }
+
+    listConfigs() {
+        return Object.keys(this.configData);
+    }
+
+    clearConfigs() {
+        this.configData = {};
+        this._saveConfiguration();
+        console.log("All configuration settings cleared.");
+    }
+}
+
+module.exports = ConfigurationManager;
+
+===================================================
+===================================================
+[d:\JSOS\device\device_manager.js]
+
+class DeviceManager {
+    constructor() {
+        this.devices = new Map();
+        this.nextDeviceId = 1;
+    }
+
+    initialize() {
+        console.log("Initializing Device Manager...");
+        this._setupDevices();
+        console.log("Device Manager initialized.");
+    }
+
+    _setupDevices() {
+        console.log("Setting up devices...");
+        // Simulate setting up initial devices
+    }
+
+    createDevice(deviceName, deviceType, deviceCharacteristics) {
+        const deviceId = this.nextDeviceId++;
+        console.log(`Creating device ${deviceName} with ID ${deviceId}`);
+
+        const deviceInfo = {
+            id: deviceId,
+            name: deviceName,
+            type: deviceType,
+            characteristics: deviceCharacteristics,
+            status: 'created'
+        };
+
+        this.devices.set(deviceId, deviceInfo);
+        console.log(`Device ${deviceName} created with ID ${deviceId}`);
+        return deviceId;
+    }
+
+    deleteDevice(deviceId) {
+        console.log(`Deleting device with ID ${deviceId}`);
+        const device = this.devices.get(deviceId);
+        if (!device) {
+            throw new Error(`Device with ID ${deviceId} not found`);
+        }
+        this.devices.delete(deviceId);
+        console.log(`Device with ID ${deviceId} deleted`);
+    }
+
+    getDeviceInfo(deviceId) {
+        const device = this.devices.get(deviceId);
+        if (!device) {
+            throw new Error(`Device with ID ${deviceId} not found`);
+        }
+        return device;
+    }
+
+    handleDeviceRequest(deviceId, requestType, requestData) {
+        console.log(`Handling device request: ${requestType} for device with ID ${deviceId}`);
+        const device = this.devices.get(deviceId);
+        if (!device) {
+            throw new Error(`Device with ID ${deviceId} not found`);
+        }
+        // Simulate handling device request based on type and data
+        switch (requestType) {
+            case 'read':
+                return this._readFromDevice(device, requestData);
+            case 'write':
+                return this._writeToDevice(device, requestData);
+            case 'control':
+                return this._controlDevice(device, requestData);
+            default:
+                throw new Error(`Unknown device request type: ${requestType}`);
+        }
+    }
+
+    _readFromDevice(device, requestData) {
+        console.log(`Reading from device ${device.name} with data ${requestData}`);
+        // Simulate reading data from device
+        return `Data read from device ${device.name}`;
+    }
+
+    _writeToDevice(device, requestData) {
+        console.log(`Writing to device ${device.name} with data ${requestData}`);
+        // Simulate writing data to device
+        return `Data written to device ${device.name}`;
+    }
+
+    _controlDevice(device, requestData) {
+        console.log(`Controlling device ${device.name} with command ${requestData.command}`);
+        // Simulate sending control commands to device
+        return `Device ${device.name} controlled with command ${requestData.command}`;
+    }
+
+    listDevices() {
+        console.log("Listing all devices...");
+        return Array.from(this.devices.values());
+    }
+
+    // Plug and Play (PnP) functionality
+    plugDevice(deviceId, device) {
+        this.createDevice(device.name, device.type, device.characteristics);
+        console.log(`Plugged in device: ${deviceId}`);
+    }
+
+    unplugDevice(deviceId) {
+        this.deleteDevice(deviceId);
+        console.log(`Unplugged device: ${deviceId}`);
+    }
+}
+
+module.exports = DeviceManager;
+
+===================================================
+===================================================
+[d:\JSOS\drivers\driver_manager.js]
+
+class DriverManager {
+    constructor() {
+        this.drivers = new Map(); // Maps driverId to driver information
+        this.nextDriverId = 1;
+    }
+
+    initialize() {
+        console.log("Initializing Driver Manager...");
+        this._setupDrivers();
+        console.log("Driver Manager initialized.");
+    }
+
+    _setupDrivers() {
+        console.log("Setting up initial drivers...");
+        // Simulate setting up initial drivers
+    }
+
+    loadDriver(driverName, driverPath, options) {
+        const driverId = this.nextDriverId++;
+        console.log(`Loading driver ${driverId}: ${driverName}`);
+
+        const driverInfo = {
+            id: driverId,
+            name: driverName,
+            path: driverPath,
+            options,
+            status: 'loaded'
+        };
+
+        this.drivers.set(driverId, driverInfo);
+        console.log(`Driver ${driverName} loaded.`);
+        return driverId;
+    }
+
+    unloadDriver(driverId) {
+        console.log(`Unloading driver ${driverId}`);
+        const driver = this.drivers.get(driverId);
+        if (!driver) {
+            throw new Error(`Driver with ID ${driverId} not found`);
+        }
+        driver.status = 'unloaded';
+        this.drivers.delete(driverId);
+        console.log(`Driver ${driverId} unloaded.`);
+    }
+
+    getDriverInfo(driverId) {
+        console.log(`Getting info for driver ${driverId}`);
+        const driver = this.drivers.get(driverId);
+        if (!driver) {
+            throw new Error(`Driver with ID ${driverId} not found`);
+        }
+        return driver;
+    }
+
+    listDrivers() {
+        console.log("Listing all drivers...");
+        return Array.from(this.drivers.values());
+    }
+
+    loadDriverDependencies(driverId) {
+        console.log(`Loading dependencies for driver ${driverId}`);
+        const driver = this.drivers.get(driverId);
+        if (!driver) {
+            throw new Error(`Driver with ID ${driverId} not found`);
+        }
+        // Simulate loading driver dependencies
+        console.log(`Dependencies for driver ${driverId} loaded.`);
+    }
+
+    initializeDriver(driverId) {
+        console.log(`Initializing driver ${driverId}`);
+        const driver = this.drivers.get(driverId);
+        if (!driver) {
+            throw new Error(`Driver with ID ${driverId} not found`);
+        }
+        // Simulate driver initialization logic
+        driver.status = 'initialized';
+        console.log(`Driver ${driverId} initialized.`);
+    }
+}
+
+module.exports = DriverManager;
+
+===================================================
+===================================================
+[d:\JSOS\events\event_manager.js]
+
+// events/event_manager.js
+class EventManager {
+    constructor() {
+        this.listeners = {};
+        this.logs = [];
+    }
+
+    initialize() {
+        console.log("Initializing Event Manager...");
+        // Additional initialization logic if needed
+    }
+
+    emitEvent(eventType, data) {
+        const event = { eventType, data, timestamp: new Date() };
+        this.logs.push(event);
+        if (this.listeners[eventType]) {
+            this.listeners[eventType].forEach(listener => listener(event));
+        }
+        console.log(`Event emitted: ${eventType}`, data);
+    }
+
+    registerListener(eventType, listener) {
+        if (!this.listeners[eventType]) {
+            this.listeners[eventType] = [];
+        }
+        this.listeners[eventType].push(listener);
+    }
+
+    getLogs() {
+        return this.logs;
+    }
+
+    getEvents() {
+        return this.logs;
+    }
+}
+
+module.exports = EventManager;
+
+===================================================
+===================================================
+[d:\JSOS\events\event_viewer.js]
+
+// events/event_viewer.js
+const EventManager = require('./event_manager');
+
+class EventViewer {
+    constructor(eventManager) {
+        this.eventManager = eventManager;
+    }
+
+    displayLogs() {
+        const logs = this.eventManager.getLogs();
+        console.log("Event Logs:");
+        logs.forEach(log => {
+            console.log(`[${log.timestamp}] ${log.type}: ${JSON.stringify(log.data)}`);
+        });
+    }
+}
+
+module.exports = EventViewer;
+
+===================================================
+===================================================
+[d:\JSOS\filesys\filesys.js]
+
+const fs = require('fs');
+
+class FileSystem {
+    initializeFileSystem() {
+        console.log("File system initialized");
+    }
+
+    manageFiles() {
+        console.log("Managing files in file system");
+    }
+
+    ensureCompatibility() {
+        console.log("Ensuring Windows compatibility in file system");
+    }
+}
+
+module.exports = new FileSystem();
+
+===================================================
+===================================================
+[d:\JSOS\filesys\filesystem_manager.js]
+
+const fs = require('fs');
+const path = require('path');
+
+class FileSystemManager {
+    constructor(eventManager) {
+        this.eventManager = eventManager;
+    }
+
+    initialize() {
+        console.log("Initializing File System Manager...");
+        this._setupFileSystem();
+        console.log("File System Manager initialized.");
+    }
+
+    _setupFileSystem() {
+        console.log("Setting up initial file system structure...");
+    }
+
+    createFile(filePath, content = '') {
+        console.log(`Creating file: ${filePath}`);
+        if (fs.existsSync(filePath)) {
+            console.log(`File ${filePath} already exists.`);
+            return;
+        }
+        fs.writeFileSync(filePath, content, 'utf8');
+        this.eventManager.emitEvent('fileCreated', { filePath });
+        console.log(`File created: ${filePath}`);
+    }
+
+    readFile(filePath) {
+        console.log(`Reading file: ${filePath}`);
+        if (!fs.existsSync(filePath)) {
+            console.log(`File ${filePath} does not exist.`);
+            return null;
+        }
+        const content = fs.readFileSync(filePath, 'utf8');
+        console.log(`File read: ${filePath}`);
+        return content;
+    }
+
+    writeFile(filePath, content) {
+        console.log(`Writing to file: ${filePath}`);
+        fs.writeFileSync(filePath, content, 'utf8');
+        this.eventManager.emitEvent('fileWritten', { filePath });
+        console.log(`File written: ${filePath}`);
+    }
+
+    deleteFile(filePath) {
+        console.log(`Deleting file: ${filePath}`);
+        if (!fs.existsSync(filePath)) {
+            console.log(`File ${filePath} does not exist.`);
+            return;
+        }
+        fs.unlinkSync(filePath);
+        this.eventManager.emitEvent('fileDeleted', { filePath });
+        console.log(`File deleted: ${filePath}`);
+    }
+
+    createDirectory(dirPath) {
+        console.log(`Creating directory: ${dirPath}`);
+        if (fs.existsSync(dirPath)) {
+            console.log(`Directory ${dirPath} already exists.`);
+            return;
+        }
+        fs.mkdirSync(dirPath, { recursive: true });
+        this.eventManager.emitEvent('directoryCreated', { dirPath });
+        console.log(`Directory created: ${dirPath}`);
+    }
+
+    deleteDirectory(dirPath) {
+        console.log(`Deleting directory: ${dirPath}`);
+        if (!fs.existsSync(dirPath)) {
+            console.log(`Directory ${dirPath} does not exist.`);
+            return;
+        }
+        fs.rmSync(dirPath, { recursive: true });
+        this.eventManager.emitEvent('directoryDeleted', { dirPath });
+        console.log(`Directory deleted: ${dirPath}`);
+    }
+
+    moveFile(sourcePath, destinationPath) {
+        console.log(`Moving file from ${sourcePath} to ${destinationPath}`);
+        if (!fs.existsSync(sourcePath)) {
+            console.log(`File ${sourcePath} does not exist.`);
+            return;
+        }
+        fs.renameSync(sourcePath, destinationPath);
+        this.eventManager.emitEvent('fileMoved', { sourcePath, destinationPath });
+        console.log(`File moved from ${sourcePath} to ${destinationPath}`);
+    }
+
+    copyFile(sourcePath, destinationPath) {
+        console.log(`Copying file from ${sourcePath} to ${destinationPath}`);
+        if (!fs.existsSync(sourcePath)) {
+            console.log(`File ${sourcePath} does not exist.`);
+            return;
+        }
+        fs.copyFileSync(sourcePath, destinationPath);
+        this.eventManager.emitEvent('fileCopied', { sourcePath, destinationPath });
+        console.log(`File copied from ${sourcePath} to ${destinationPath}`);
+    }
+
+    renameFile(oldPath, newPath) {
+        console.log(`Renaming file from ${oldPath} to ${newPath}`);
+        if (!fs.existsSync(oldPath)) {
+            console.log(`File ${oldPath} does not exist.`);
+            return;
+        }
+        fs.renameSync(oldPath, newPath);
+        this.eventManager.emitEvent('fileRenamed', { oldPath, newPath });
+        console.log(`File renamed from ${oldPath} to ${newPath}`);
+    }
+
+    listFiles(dirPath) {
+        console.log(`Listing files in directory: ${dirPath}`);
+        if (!fs.existsSync(dirPath)) {
+            console.log(`Directory ${dirPath} does not exist.`);
+            return [];
+        }
+        const files = fs.readdirSync(dirPath);
+        console.log(`Files in directory ${dirPath}:`, files);
+        return files;
+    }
+}
+
+module.exports = FileSystemManager;
+
+===================================================
+===================================================
+[d:\JSOS\graphics\graphics.js]
+
+// graphics.js - NodeOS graphics module in JavaScript
+
+// Function to initialize graphics
+function initializeGraphics() {
+    console.log("Graphics initialized");
+    // Implement graphics initialization logic
+}
+
+// Function to handle drawing on screen
+function drawOnScreen(content) {
+    console.log("Drawing on screen:", content);
+    // Implement drawing logic
+}
+
+module.exports = {
+    initializeGraphics,
+    drawOnScreen
+};
+
+===================================================
+===================================================
+[d:\JSOS\graphics\graphics_manager.js]
+
+class GraphicsManager {
+    constructor() {
+        this.windows = new Map(); // Maps windowId to window information
+        this.nextWindowId = 1;
+    }
+
+    initialize() {
+        console.log("Initializing Graphics Manager...");
+        this._setupGraphics();
+        console.log("Graphics Manager initialized.");
+    }
+
+    _setupGraphics() {
+        console.log("Setting up graphics components...");
+        // Simulate setting up graphics components
+    }
+
+    createWindow(title, width, height, options) {
+        const windowId = this.nextWindowId++;
+        console.log(`Creating window ${windowId} with title: ${title}`);
+
+        const windowInfo = {
+            id: windowId,
+            title,
+            width,
+            height,
+            options,
+            content: '',
+            status: 'created'
+        };
+
+        this.windows.set(windowId, windowInfo);
+        console.log(`Window ${windowId} created with title: ${title}`);
+        return windowId;
+    }
+
+    closeWindow(windowId) {
+        console.log(`Closing window ${windowId}`);
+        const window = this.windows.get(windowId);
+        if (!window) {
+            throw new Error(`Window with ID ${windowId} not found`);
+        }
+        window.status = 'closed';
+        this.windows.delete(windowId);
+        console.log(`Window ${windowId} closed`);
+    }
+
+    drawGraphics(windowId, graphicsData) {
+        console.log(`Drawing graphics in window ${windowId}:`, graphicsData);
+        const window = this.windows.get(windowId);
+        if (!window) {
+            throw new Error(`Window with ID ${windowId} not found`);
+        }
+        // Simulate drawing graphics by updating the content
+        window.content = graphicsData.description || 'Graphics data';
+        console.log(`Graphics drawn in window ${windowId}`);
+    }
+
+    handleUserInteraction(windowId, event) {
+        console.log(`Handling user interaction in window ${windowId}: ${event.type}`);
+        const window = this.windows.get(windowId);
+        if (!window) {
+            throw new Error(`Window with ID ${windowId} not found`);
+        }
+        // Simulate handling user interactions
+        console.log(`User interaction in window ${windowId} handled`);
+    }
+
+    getWindowInfo(windowId) {
+        console.log(`Getting info for window ${windowId}`);
+        const window = this.windows.get(windowId);
+        if (!window) {
+            throw new Error(`Window with ID ${windowId} not found`);
+        }
+        return window;
+    }
+
+    listWindows() {
+        console.log("Listing all windows...");
+        return Array.from(this.windows.values());
+    }
+}
+
+module.exports = GraphicsManager;
+
+===================================================
+===================================================
+[d:\JSOS\io\io_manager.js]
+
+const fs = require('fs');
+
+class IOManager {
+    constructor() {
+        this.fileHandles = new Map();
+        this.nextFileHandle = 1;
+    }
+
+    initialize() {
+        console.log("Initializing I/O Manager...");
+        this._setupFileSystem();
+        console.log("I/O Manager initialized.");
+    }
+
+    _setupFileSystem() {
+        console.log("Setting up file system...");
+    }
+
+    createFile(filePath, options = 'w') {
+        console.log(`Creating file: ${filePath}`);
+        try {
+            const fd = fs.openSync(filePath, options);
+            const fileHandle = this.nextFileHandle++;
+            this.fileHandles.set(fileHandle, { filePath, fd });
+            console.log(`File created: ${filePath} with handle ${fileHandle}`);
+            return fileHandle;
+        } catch (error) {
+            console.error(`Error creating file ${filePath}:`, error);
+            throw error;
+        }
+    }
+
+    readFile(fileHandle, buffer, offset, length, position) {
+        console.log(`Reading file with handle: ${fileHandle}`);
+        try {
+            const file = this.fileHandles.get(fileHandle);
+            if (!file) {
+                throw new Error(`Invalid file handle: ${fileHandle}`);
+            }
+            const bytesRead = fs.readSync(file.fd, buffer, offset, length, position);
+            console.log(`Read ${bytesRead} bytes from file ${file.filePath}`);
+            return bytesRead;
+        } catch (error) {
+            console.error(`Error reading file with handle ${fileHandle}:`, error);
+            throw error;
+        }
+    }
+
+    writeFile(fileHandle, buffer, offset, length, position) {
+        console.log(`Writing to file with handle: ${fileHandle}`);
+        try {
+            const file = this.fileHandles.get(fileHandle);
+            if (!file) {
+                throw new Error(`Invalid file handle: ${fileHandle}`);
+            }
+            const bytesWritten = fs.writeSync(file.fd, buffer, offset, length, position);
+            console.log(`Wrote ${bytesWritten} bytes to file ${file.filePath}`);
+            return bytesWritten;
+        } catch (error) {
+            console.error(`Error writing to file with handle ${fileHandle}:`, error);
+            throw error;
+        }
+    }
+
+    deleteFile(filePath) {
+        console.log(`Deleting file: ${filePath}`);
+        try {
+            fs.unlinkSync(filePath);
+            console.log(`File deleted: ${filePath}`);
+        } catch (error) {
+            console.error(`Error deleting file ${filePath}:`, error);
+            throw error;
+        }
+    }
+
+    closeFile(fileHandle) {
+        console.log(`Closing file with handle: ${fileHandle}`);
+        try {
+            const file = this.fileHandles.get(fileHandle);
+            if (!file) {
+                throw new Error(`Invalid file handle: ${fileHandle}`);
+            }
+            fs.closeSync(file.fd);
+            this.fileHandles.delete(fileHandle);
+            console.log(`File with handle ${fileHandle} closed`);
+        } catch (error) {
+            console.error(`Error closing file with handle ${fileHandle}:`, error);
+            throw error;
+        }
+    }
+}
+
+module.exports = IOManager;
+
+===================================================
+===================================================
+[d:\JSOS\kernel\create_bootrecord.js]
+
+const fs = require('fs');
+const path = require('path');
+
+const bootRecord = Buffer.alloc(512, 0); // Create a 512-byte buffer initialized with zeros
+
+// Add a simple boot signature at the end of the buffer (optional)
+bootRecord[510] = 0x55;
+bootRecord[511] = 0xAA;
+
+// Add a bootable partition entry (80h indicates bootable)
+// Partition table entries are 16 bytes each, starting at offset 446
+const partitionTableOffset = 446;
+bootRecord[partitionTableOffset] = 0x80; // Boot indicator (0x80 means bootable)
+bootRecord[partitionTableOffset + 1] = 0x01; // Starting head
+bootRecord[partitionTableOffset + 2] = 0x01; // Starting sector
+bootRecord[partitionTableOffset + 3] = 0x00; // Starting cylinder
+bootRecord[partitionTableOffset + 4] = 0x07; // Partition type (0x07 means NTFS)
+bootRecord[partitionTableOffset + 5] = 0xFE; // Ending head
+bootRecord[partitionTableOffset + 6] = 0xFF; // Ending sector
+bootRecord[partitionTableOffset + 7] = 0xFF; // Ending cylinder
+bootRecord[partitionTableOffset + 8] = 0x3F; // Relative sectors (start of partition)
+bootRecord[partitionTableOffset + 9] = 0x00;
+bootRecord[partitionTableOffset + 10] = 0x00;
+bootRecord[partitionTableOffset + 11] = 0x00;
+bootRecord[partitionTableOffset + 12] = 0x00; // Total sectors in partition
+bootRecord[partitionTableOffset + 13] = 0x00;
+bootRecord[partitionTableOffset + 14] = 0x00;
+bootRecord[partitionTableOffset + 15] = 0x00;
+
+const filePath = path.join(__dirname, 'bootrecord.bin');
+fs.writeFileSync(filePath, bootRecord);
+
+console.log('Mock bootrecord.bin with bootable partition created successfully.');
+
+===================================================
+===================================================
+[d:\JSOS\kernel\create_bootsector.js]
+
+const fs = require('fs');
+const path = require('path');
+
+const bootSector = Buffer.alloc(512, 0); // Create a 512-byte buffer initialized with zeros
+
+// Add a simple boot signature at the end of the buffer (optional)
+bootSector[510] = 0x55;
+bootSector[511] = 0xAA;
+
+const filePath = path.join(__dirname, 'bootsector.bin');
+fs.writeFileSync(filePath, bootSector);
+
+console.log('Mock bootsector.bin created successfully at', filePath);
+
+===================================================
+===================================================
+[d:\JSOS\kernel\create_disk_image.js]
+
+const fs = require('fs');
+const path = require('path');
+
+// Create a 10 MB disk image
+const diskSize = 10 * 1024 * 1024; // 10 MB
+const diskImage = Buffer.alloc(diskSize, 0); // Initialize with zeros
+
+const diskImagePath = path.join(__dirname, 'mock_disk.img');
+fs.writeFileSync(diskImagePath, diskImage);
+
+console.log('Mock disk image created successfully at', diskImagePath);
+
+===================================================
+===================================================
+[d:\JSOS\kernel\create_ntldr.js]
+
+const fs = require('fs');
+const path = require('path');
+
+const ntldrContent = "This is a mock NTLDR file."; // Simple content for NTLDR
+
+const filePath = path.join(__dirname, 'NTLDR');
+fs.writeFileSync(filePath, ntldrContent);
+
+console.log('Mock NTLDR file created successfully at', filePath);
+
+===================================================
+===================================================
+[d:\JSOS\kernel\hardware_detection.js]
+
+/**
+ * Hardware Detection Logic for JSOS
+ *
+ * This function detects and initializes hardware components.
+ */
+
+function detectHardware() {
+    // Placeholder for hardware detection logic
+    console.log("Detecting hardware...");
+    // Actual implementation would involve detecting CPU, memory, devices, etc.
+}
+
+function initializeHardware() {
+    // Placeholder for hardware initialization logic
+    console.log("Initializing hardware...");
+    // Actual implementation would initialize detected hardware components
+}
+
+function hardwareDetectionProcess() {
+    console.log("Starting hardware detection process...");
+    detectHardware();
+    initializeHardware();
+    console.log("Hardware detection and initialization complete.");
+}
+
+// Example usage
+hardwareDetectionProcess();
+
+module.exports = {
+    hardwareDetectionProcess,
+    detectHardware,
+    initializeHardware
+};
+
+===================================================
+===================================================
+[d:\JSOS\kernel\init.js]
+
+/**
+ * JSOS Initialization Script
+ *
+ * This script initializes the JSOS boot process.
+ */
+
+const osloader = require('./osloader.js');
+const regboot = require('./regboot.js');
+const ntfsBoot = require('./ntfs_boot');
+const hardwareDetection = require('./hardware_detection');
+const mainBoot = require('./main_boot');
+
+// Define a mock loader parameter block (replace with actual parameters as needed)
+const loaderParameterBlock = {
+    systemRoot: 'D:\\JSOS' // Updated path to the project directory
+};
+
+// Start the NTFS boot process
+const devicePath = '/dev/sda'; // Example device path, replace as necessary
+ntfsBoot.ntfsBoot(devicePath);
+
+// Start the hardware detection process
+hardwareDetection.hardwareDetectionProcess();
+
+// Set up the main boot process
+mainBoot.mainBootProcess();
+
+// Load the system hive
+regboot.loadSystemHive(loaderParameterBlock.systemRoot);
+
+// Compute the driver load list
+const driverLoadList = regboot.computeDriverLoadList();
+console.log('Driver Load List:', driverLoadList);
+
+// Start the OS loader
+osloader.loadOS(loaderParameterBlock);
+
+console.log("System initialization complete.");
+
+===================================================
+===================================================
+[d:\JSOS\kernel\interrupt_manager.js]
+
+class InterruptManager {
+    constructor() {
+        this.interruptHandlers = new Map();
+    }
+
+    initialize() {
+        console.log("Initializing Interrupt Manager...");
+        this._setupInterrupts();
+        console.log("Interrupt Manager initialized.");
+    }
+
+    _setupInterrupts() {
+        console.log("Setting up interrupt handlers...");
+        // Define default interrupt handlers here
+    }
+
+    registerInterrupt(interruptId, handler) {
+        console.log(`Registering interrupt handler for interrupt ${interruptId}`);
+        this.interruptHandlers.set(interruptId, handler);
+    }
+
+    handleInterrupt(interruptId, ...args) {
+        console.log(`Handling interrupt ${interruptId} with args:`, args);
+        const interruptHandler = this.interruptHandlers.get(interruptId);
+        if (!interruptHandler) {
+            throw new Error(`Unknown interrupt ID: ${interruptId}`);
+        }
+        return interruptHandler(...args);
+    }
+}
+
+module.exports = InterruptManager;
+
+===================================================
+===================================================
+[d:\JSOS\kernel\kernel.js]
+
+const MemoryManager = require('../memory/memory_manager');
+const ProcessManager = require('./process_manager');
+const IOManager = require('../io/io_manager');
+const DeviceManager = require('../device/device_manager');
+const NetworkManager = require('../network/network_manager');
+const SecurityManager = require('../security/security_manager');
+const SubsystemManager = require('../subsys/subsys_manager');
+const SyscallManager = require('./syscall_manager');
+const FileSystemManager = require('../filesys/filesystem_manager');
+const EventManager = require('../events/event_manager');
+
+class Kernel {
+    constructor() {
+        this.memoryManager = new MemoryManager();
+        this.processManager = new ProcessManager();
+        this.ioManager = new IOManager();
+        this.deviceManager = new DeviceManager();
+        this.networkManager = new NetworkManager();
+        this.securityManager = new SecurityManager();
+        this.subsystemManager = new SubsystemManager();
+        this.eventManager = new EventManager();
+        this.fileSystemManager = new FileSystemManager(this.eventManager);
+        this.syscallManager = new SyscallManager(this);
+    }
+
+    initialize() {
+        console.log("Initializing Kernel...");
+        this.memoryManager.initialize();
+        this.processManager.initialize();
+        this.ioManager.initialize();
+        this.deviceManager.initialize();
+        this.networkManager.initialize();
+        this.securityManager.initialize();
+        this.subsystemManager.initialize();
+        this.eventManager.initialize();
+        this.fileSystemManager.initialize();
+        this.syscallManager.initialize();
+        this.eventManager.emitEvent('kernelInitialized', {});
+        console.log("Kernel initialized successfully.");
+    }
+
+    run() {
+        console.log("Kernel is running...");
+        // Add logic here if necessary to run the kernel
+    }
+
+    handleSystemCall(syscall, args) {
+        return this.syscallManager.handleSystemCall(syscall, args);
+    }
+}
+
+module.exports = Kernel;
+
+===================================================
+===================================================
+[d:\JSOS\kernel\main_boot.js]
+
+/**
+ * Main Boot Routines for JSOS
+ *
+ * This function sets up the system environment and handles console input/output.
+ */
+
+function setupEnvironment() {
+    // Placeholder for environment setup logic
+    console.log("Setting up environment...");
+    // Actual implementation would involve setting up system variables, paths, etc.
+}
+
+function handleConsoleIO() {
+    // Placeholder for console input/output handling logic
+    console.log("Handling console input/output...");
+    // Actual implementation would handle input/output operations for the console
+}
+
+function mainBootProcess() {
+    console.log("Starting main boot process...");
+    setupEnvironment();
+    handleConsoleIO();
+    console.log("Main boot process complete.");
+}
+
+// Example usage
+mainBootProcess();
+
+module.exports = {
+    mainBootProcess,
+    setupEnvironment,
+    handleConsoleIO
+};
+
+===================================================
+===================================================
+[d:\JSOS\kernel\mbr_boot.js]
+
+// mbr_boot.js
+const fs = require('fs');
+const path = require('path');
+
+function initializeMBR() {
+    console.log("Initializing MBR...");
+
+    // Simulate memory segments (buffers)
+    let BootRecord = Buffer.alloc(512); // Initial boot record
+    let RelocatedBootRecord = Buffer.alloc(512); // Relocated boot record
+    let PartitionTable = Buffer.alloc(64); // Partition table
+
+    // Read the boot record from a file (simulated)
+    const bootRecordPath = path.join(__dirname, 'bootrecord.bin');
+    if (fs.existsSync(bootRecordPath)) {
+        BootRecord = fs.readFileSync(bootRecordPath);
+        console.log("Boot record loaded successfully.");
+    } else {
+        console.error("Boot record file not found.");
+        return false;
+    }
+
+    // Relocate boot record
+    RelocatedBootRecord = Buffer.from(BootRecord);
+    console.log("Boot record relocated successfully.");
+
+    // Read the partition table from the boot record
+    PartitionTable = BootRecord.slice(446, 510); // Standard location of partition table in MBR
+    console.log("Partition table read successfully.");
+
+    // Handle partition table entries
+    let bootableEntry = false;
+    for (let i = 0; i < 4; i++) {
+        const entry = PartitionTable.slice(i * 16, (i + 1) * 16);
+        const bootIndicator = entry[0];
+        if (bootIndicator === 0x80) { // Bootable entry
+            bootableEntry = true;
+            console.log(`Bootable partition found: Entry ${i + 1}`);
+            // Load the partition boot record (simulated)
+            // Add logic to load the partition boot record here
+            break;
+        } else if (bootIndicator !== 0x00) {
+            console.error(`Invalid boot indicator in partition ${i + 1}`);
+            return false;
+        }
+    }
+
+    if (!bootableEntry) {
+        console.error("No bootable partition found.");
+        // Simulate int 18h to go to ROM basic (not implemented)
+        return false;
+    }
+
+    return true;
+}
+
+module.exports = {
+    initializeMBR
+};
+
+===================================================
+===================================================
+[d:\JSOS\kernel\memory.js]
+
+class MemoryManager {
+    constructor() {
+        this.memoryMap = new Map();
+    }
+
+    allocateMemory(pid, size) {
+        console.log(`Allocating ${size} bytes for process ${pid}`);
+        if (!this.memoryMap.has(pid)) {
+            this.memoryMap.set(pid, []);
+        }
+        this.memoryMap.get(pid).push(size);
+    }
+
+    freeMemory(pid) {
+        console.log(`Freeing memory for process ${pid}`);
+        this.memoryMap.delete(pid);
+    }
+
+    getMemoryUsage(pid) {
+        return this.memoryMap.get(pid) || [];
+    }
+}
+
+module.exports = new MemoryManager();
+
+===================================================
+===================================================
+[d:\JSOS\kernel\ntfs_boot.js]
+
+const fs = require('fs');
+const path = require('path');
+
+function loadNTLDR() {
+    console.log("Loading NTLDR...");
+
+    // Define segments (simulated as variables)
+    let BootSeg = Buffer.alloc(512); // Simulate the initial boot sector
+    let NewSeg = Buffer.alloc(512 * 16); // Simulate relocation segment
+    let LdrSeg = Buffer.alloc(1024 * 64); // Simulate NTLDR load segment
+
+    // Read the boot sector from a file (simulated)
+    const bootSectorPath = path.join(__dirname, 'bootsector.bin');
+    console.log("Checking for boot sector at:", bootSectorPath);
+    if (fs.existsSync(bootSectorPath)) {
+        BootSeg = fs.readFileSync(bootSectorPath);
+        console.log("Boot sector loaded successfully.");
+    } else {
+        console.error("Boot sector file not found at", bootSectorPath);
+        return false;
+    }
+
+    // Relocate boot sector to NewSeg
+    NewSeg = Buffer.from(BootSeg);
+    console.log("Boot sector relocated successfully.");
+
+    // Load NTLDR into LdrSeg (simulated)
+    const ntldrPath = path.join(__dirname, 'NTLDR');
+    console.log("Checking for NTLDR at:", ntldrPath);
+    if (fs.existsSync(ntldrPath)) {
+        LdrSeg = fs.readFileSync(ntldrPath);
+        console.log("NTLDR loaded successfully.");
+    } else {
+        console.error("NTLDR file not found at", ntldrPath);
+        return false;
+    }
+
+    // Transfer control to NTLDR (simulated)
+    console.log("Transferring control to NTLDR...");
+
+    return true;
+}
+
+module.exports = {
+    loadNTLDR
+};
+
+===================================================
+===================================================
+[d:\JSOS\kernel\osloader.js]
+
+const fs = require('fs');
+const path = require('path');
+const ntfsBoot = require('./ntfs_boot');
+const mbrBoot = require('./mbr_boot');
+
+const diskImagePath = path.join(__dirname, 'mock_disk.img');
+
+let BlRebootSystem = false;
+
+// Define transfer entry of loaded image
+function transferRoutine(loaderParameterBlock) {
+    console.log("Transferring control to the loaded image...");
+    // Implement transfer logic
+}
+
+// Main function to load the OS
+function loadOS(argv) {
+    console.log("Starting JSOS loader...");
+
+    if (!fs.existsSync(diskImagePath)) {
+        console.error("Disk image not found");
+        return false;
+    }
+
+    const diskImage = fs.readFileSync(diskImagePath);
+
+    // Example logic to simulate reading system and boot partitions from the disk image
+    const systemPartitionOffset = 512; // Assume system partition starts at sector 1 (512 bytes offset)
+    const bootPartitionOffset = systemPartitionOffset + (1 * 1024 * 1024); // Assume boot partition starts after 1 MB
+
+    const systemPartition = diskImage.slice(systemPartitionOffset, systemPartitionOffset + (1 * 1024 * 1024));
+    const bootPartition = diskImage.slice(bootPartitionOffset, bootPartitionOffset + (1 * 1024 * 1024));
+    const consoleInputDevice = {}; // Simulated console input device
+
+    console.log("System, boot partitions, and console input device opened successfully");
+
+    // Initialize MBR
+    const mbrResult = mbrBoot.initializeMBR();
+    if (!mbrResult) {
+        return false;
+    }
+
+    // Load NTFS boot code
+    const ntfsResult = ntfsBoot.loadNTLDR();
+    if (!ntfsResult) {
+        return false;
+    }
+
+    transferRoutine({});
+    return true;
+}
+
+module.exports = {
+    loadOS
+};
+
+===================================================
+===================================================
+[d:\JSOS\kernel\partition_disk_image.js]
+
+const fs = require('fs');
+const path = require('path');
+
+const diskImagePath = path.join(__dirname, 'mock_disk.img');
+const diskImage = fs.readFileSync(diskImagePath);
+
+// Define partition table (MBR)
+// This is a very simplified example; in reality, you would need a more complex structure.
+const mbr = Buffer.alloc(512, 0);
+mbr[510] = 0x55;
+mbr[511] = 0xAA;
+
+// Partition entry: bootable, start at sector 1, size 2048 sectors (1 MB)
+// This is a simplified example; the real MBR partition entry has more fields.
+const partitionEntryOffset = 446;
+mbr[partitionEntryOffset] = 0x80; // Bootable flag
+mbr[partitionEntryOffset + 1] = 0x00; // Starting head
+mbr[partitionEntryOffset + 2] = 0x01; // Starting sector
+mbr[partitionEntryOffset + 3] = 0x00; // Starting cylinder
+mbr[partitionEntryOffset + 4] = 0x07; // Partition type (NTFS)
+mbr[partitionEntryOffset + 5] = 0x00; // Ending head
+mbr[partitionEntryOffset + 6] = 0x3F; // Ending sector
+mbr[partitionEntryOffset + 7] = 0x00; // Ending cylinder
+mbr[partitionEntryOffset + 8] = 0x01; // Relative sectors (starting at sector 1)
+mbr[partitionEntryOffset + 9] = 0x00;
+mbr[partitionEntryOffset + 10] = 0x00;
+mbr[partitionEntryOffset + 11] = 0x00;
+mbr[partitionEntryOffset + 12] = 0x00; // Total sectors in partition
+mbr[partitionEntryOffset + 13] = 0x08;
+mbr[partitionEntryOffset + 14] = 0x00;
+mbr[partitionEntryOffset + 15] = 0x00;
+
+// Write MBR to the disk image
+diskImage.write(mbr.toString('binary'), 0, 512, 'binary');
+
+// Write back to disk image
+fs.writeFileSync(diskImagePath, diskImage);
+
+console.log('Disk image partitioned successfully.');
+
+===================================================
+===================================================
+[d:\JSOS\kernel\process_manager.js]
+
+// Define the Process Control Block (PCB)
+class PCB {
+    constructor(pid, state, priority, programCounter, registers, memory) {
+        this.pid = pid; // Process ID
+        this.state = state; // Process State
+        this.priority = priority; // Process Priority
+        this.programCounter = programCounter; // Program Counter
+        this.registers = registers; // CPU Registers
+        this.memory = memory; // Memory allocated to the process
+    }
+}
+
+// Process States
+const ProcessState = {
+    NEW: 'NEW',
+    READY: 'READY',
+    RUNNING: 'RUNNING',
+    WAITING: 'WAITING',
+    TERMINATED: 'TERMINATED'
+};
+
+// Time Quantum for Round Robin Scheduling
+const TIME_QUANTUM = 5;
+
+// Define a message queue for IPC
+class MessageQueue {
+    constructor() {
+        this.queue = [];
+    }
+
+    sendMessage(message) {
+        this.queue.push(message);
+        console.log(`Message sent: ${JSON.stringify(message)}`);
+    }
+
+    receiveMessage() {
+        if (this.queue.length > 0) {
+            const message = this.queue.shift();
+            console.log(`Message received: ${JSON.stringify(message)}`);
+            return message;
+        } else {
+            console.log('No messages in the queue.');
+            return null;
+        }
+    }
+}
+
+class ProcessManager {
+    constructor() {
+        this.processTable = [];
+        this.globalMessageQueue = new MessageQueue();
+        this.currentProcessIndex = 0;
+    }
+
+    initialize() {
+        console.log("Initializing Process Manager...");
+        this.processTable = [];
+        this.currentProcessIndex = 0;
+        console.log("Process Manager initialized.");
+    }
+
+    createProcess(pid, priority) {
+        const newProcess = new PCB(pid, ProcessState.NEW, priority, 0, {}, null);
+        this.processTable.push(newProcess);
+        newProcess.state = ProcessState.READY;
+        console.log(`Process ${pid} created and set to READY state.`);
+        return newProcess.pid;
+    }
+
+    terminateProcess(pid) {
+        const process = this.processTable.find(p => p.pid === pid);
+        if (process) {
+            process.state = ProcessState.TERMINATED;
+            console.log(`Process ${pid} terminated.`);
+        } else {
+            console.error(`Process ${pid} not found.`);
+        }
+    }
+
+    roundRobinScheduling() {
+        const schedule = () => {
+            if (this.processTable.length === 0) {
+                console.log('No processes to schedule.');
+                return;
+            }
+
+            const currentProcess = this.processTable[this.currentProcessIndex];
+            if (currentProcess.state === ProcessState.READY || currentProcess.state === ProcessState.RUNNING) {
+                currentProcess.state = ProcessState.RUNNING;
+                console.log(`Running process ${currentProcess.pid}`);
+
+                // Simulate process execution for a time quantum
+                setTimeout(() => {
+                    currentProcess.state = ProcessState.READY;
+                    console.log(`Process ${currentProcess.pid} time quantum ended, switching context.`);
+
+                    // Move to the next process
+                    this.currentProcessIndex = (this.currentProcessIndex + 1) % this.processTable.length;
+                    schedule();
+                }, TIME_QUANTUM * 1000);
+            } else {
+                // Move to the next process if the current one is not ready/running
+                this.currentProcessIndex = (this.currentProcessIndex + 1) % this.processTable.length;
+                schedule();
+            }
+        };
+
+        // Start scheduling
+        schedule();
+    }
+
+    priorityScheduling() {
+        const schedule = () => {
+            if (this.processTable.length === 0) {
+                console.log('No processes to schedule.');
+                return;
+            }
+
+            // Sort processes by priority (higher priority first)
+            this.processTable.sort((a, b) => b.priority - a.priority);
+
+            for (const process of this.processTable) {
+                if (process.state === ProcessState.READY) {
+                    process.state = ProcessState.RUNNING;
+                    console.log(`Running process ${process.pid} with priority ${process.priority}`);
+
+                    // Simulate process execution
+                    setTimeout(() => {
+                        process.state = ProcessState.READY;
+                        console.log(`Process ${process.pid} execution completed, switching context.`);
+                        schedule();
+                    }, TIME_QUANTUM * 1000);
+                    break;
+                }
+            }
+        };
+
+        // Start scheduling
+        schedule();
+    }
+
+    sendMessage(pid, message) {
+        this.globalMessageQueue.sendMessage({ pid, message });
+    }
+
+    receiveMessage() {
+        return this.globalMessageQueue.receiveMessage();
+    }
+
+    listProcesses() {
+        return this.processTable;
+    }
+
+    suspendProcess(pid) {
+        const process = this.processTable.find(p => p.pid === pid);
+        if (process && process.state === ProcessState.RUNNING) {
+            process.state = ProcessState.WAITING;
+            console.log(`Process ${pid} suspended.`);
+        } else {
+            console.error(`Process ${pid} not found or not running.`);
+        }
+    }
+
+    resumeProcess(pid) {
+        const process = this.processTable.find(p => p.pid === pid);
+        if (process && process.state === ProcessState.WAITING) {
+            process.state = ProcessState.READY;
+            console.log(`Process ${pid} resumed.`);
+        } else {
+            console.error(`Process ${pid} not found or not suspended.`);
+        }
+    }
+}
+
+module.exports = ProcessManager;
+
+===================================================
+===================================================
+[d:\JSOS\kernel\regboot.js]
+
+
+/**
+ * JSOS Registry Boot
+ * 
+ * Provides a minimal registry implementation designed to be used by the osloader at boot time.
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+// Placeholder for registry hive
+let BootHive = {};
+
+function loadSystemHive(systemRoot) {
+    // Implement the logic to load the system hive from <SystemRoot>\config\SYSTEM
+    console.log("Loading system hive from", path.join(systemRoot, 'config', 'SYSTEM'));
+
+    // Placeholder: Load and parse the hive file (simulate with an empty object for now)
+    BootHive = {}; // Replace with actual logic to load and parse the hive file
+}
+
+function computeDriverLoadList() {
+    // Implement the logic to compute the driver load list from the system hive
+    console.log("Computing driver load list...");
+
+    // Placeholder: Simulate computing the driver load list
+    const driverLoadList = []; // Replace with actual logic to compute the driver load list
+    return driverLoadList;
+}
+
+module.exports = {
+    loadSystemHive,
+    computeDriverLoadList
+};
+
+===================================================
+===================================================
+[d:\JSOS\kernel\syscall.js]
+
+class Syscall {
+    handleSyscall(syscallNumber, syscallArgs) {
+        console.log(`Handling syscall: ${syscallNumber}`);
+        // Syscall handling logic here
+    }
+}
+
+module.exports = new Syscall();
+
+===================================================
+===================================================
+[d:\JSOS\kernel\syscall_manager.js]
+
+class SyscallManager {
+    constructor(kernel) {
+        this.kernel = kernel;
+    }
+
+    initialize() {
+        console.log("Initializing Syscall Manager...");
+        this._setupSyscalls();
+        console.log("Syscall Manager initialized.");
+    }
+
+    _setupSyscalls() {
+        this.syscalls = {
+            'createDirectory': this.kernel.fileSystemManager.createDirectory.bind(this.kernel.fileSystemManager),
+            'deleteDirectory': this.kernel.fileSystemManager.deleteDirectory.bind(this.kernel.fileSystemManager),
+            'allocateMemory': this.kernel.memoryManager.allocateVirtualMemory.bind(this.kernel.memoryManager),
+            'freeMemory': this.kernel.memoryManager.freeVirtualMemory.bind(this.kernel.memoryManager),
+            'createProcess': this.kernel.processManager.createProcess.bind(this.kernel.processManager),
+            'terminateProcess': this.kernel.processManager.terminateProcess.bind(this.kernel.processManager),
+            'createFile': this.kernel.fileSystemManager.createFile.bind(this.kernel.fileSystemManager),
+            'readFile': this.kernel.fileSystemManager.readFile.bind(this.kernel.fileSystemManager),
+            'writeFile': this.kernel.fileSystemManager.writeFile.bind(this.kernel.fileSystemManager),
+            'deleteFile': this.kernel.fileSystemManager.deleteFile.bind(this.kernel.fileSystemManager),
+            'listFiles': this.kernel.fileSystemManager.listFiles.bind(this.kernel.fileSystemManager),
+            // Add other syscalls as needed
+        };
+    }
+
+    handleSystemCall(syscall, args) {
+        const syscallHandler = this.syscalls[syscall];
+        if (syscallHandler) {
+            return syscallHandler(...args);
+        } else {
+            throw new Error(`Unknown syscall: ${syscall}`);
+        }
+    }
+}
+
+module.exports = SyscallManager;
+
+===================================================
+===================================================
+[d:\JSOS\kernel\traps.js]
+
+class Traps {
+    handleTrap(trapType, trapInfo) {
+        console.log(`Handling trap: ${trapType}`);
+        // Trap handling logic here
+    }
+}
+
+module.exports = new Traps();
+
+===================================================
+===================================================
+[d:\JSOS\lib\index.js]
+
+/**
+ * NodeOS
+ *
+ * @copyright 2013-2017 Jacob Groundwater, Jesús Leganés-Combarro 'piranna'
+ *  and other contributors
+ *
+ * @license MIT
+ */
+
+const fs        = require('fs');
+const join      = require('path').join;
+const spawnSync = require('child_process').spawnSync;
+const wow64     = require('../wow64/wow64.js');
+const csrss     = require('../subsys/csrss.js');
+const pnp       = require('../pnp/pnp.js');
+const shell     = require('../shell/shell.js');
+const loader    = require('../loader/loader.js');
+const processArguments = require('nodeos-barebones/scripts/processArguments');
+
+function checkKvm(qemuBin) {
+  let contents = ""
+
+  try {
+    contents = fs.readFileSync('/proc/cpuinfo')
+  } catch(e) {
+    if(e.code !== 'ENOENT') throw(e)
+
+    return false
+  }
+
+  if(! /(vmx|svm|0xc0f)/.test(contents)) return false
+
+  // We have support for KVM, let's see if QEmu has permissions to use it
+  try {
+    spawnSync(qemuBin, ['-nographic'], {timeout: 1000})
+  } catch(e) {
+    return true
+  }
+}
+
+function prepareCommandLine(argv, output) {
+  const args = processArguments(argv)
+  const link = fs.readlinkSync('out/latest').split('/') || []
+
+  const cpu_family = args.cpu_family || link[link.length-3]
+  const machine    = args.machine    || link[link.length-2]
+  const platform   = args.platform   || link[link.length-1]
+
+  const cpu = args.cpu
+
+  let command = 'qemu-system-'+cpu_family
+
+  argv = [
+    '-machine', machine,
+    '-m', '256M',
+    '-vga', 'std',
+    '-net', 'nic',
+    '-net', 'user,id=eth0,hostfwd=tcp::50080-:80',
+    '-net', 'user,id=eth1,hostfwd=tcp::50443-:443'
+  ]
+
+  switch(output) {
+    case 'curses'   : argv.push('-curses')   ; break
+    case 'nographic': argv.push('-nographic'); break
+  }
+
+  // check if kvm is supported
+  let timeout_rate = 1
+
+  function qemuKvm() {
+    if(checkKvm(command)) {
+      argv.push('-enable-kvm')
+      timeout_rate = 0.1
+    }
+  }
+
+  // CWD
+  const cwd = join('out', cpu_family, machine, platform)
+
+  switch(platform) {
+    case 'disk':
+      qemuKvm()
+      argv.push('-hda', 'disk.img')
+      break
+
+    case 'docker':
+      command = 'docker'
+      argv = [
+        'run', '-it',
+        '--cap-add', 'SYS_ADMIN',
+        '--security-opt=apparmor:unconfined',
+        '--device', '/dev/fuse',
+        'nodeos/nodeos',
+        // '-v', 'usersfs:/tmp'
+      ]
+      break
+
+    case 'img':
+      qemuKvm()
+      argv.push('-hda', 'bootfs.img',
+          '-hdb', 'usersfs.img')
+      break
+
+    case 'iso':
+      qemuKvm()
+      argv.push('-cdrom', 'bootfs.iso',
+          '-hda'  , 'usersfs.img')
+      break
+
+    case 'qemu':
+      qemuKvm()
+      const append = [
+        'root=/dev/sda',
+        'ip=dhcp'
+      ]
+
+      switch(output) {
+        case 'nographic':
+          append.push('console=ttyS0')  // redirect to terminal
+          break
+        case 'curses':
+          append.push('vga=extended')  // 80x50
+          break
+        default:
+          append.push('vga=0x344')  // 1024x768x32
+      }
+
+      argv.push('--kernel', 'kernel',
+          '--initrd', 'initramfs.cpio.gz',
+          '-drive',   `file=usersfs.img,format=raw,index=0`,
+          '-append', append.join(' '))
+      break
+
+    case 'tar':
+    case 'vagga':
+      break
+
+    default:
+      throw 'Unknown platform "'+platform+'"'
+  }
+
+  return {command, argv, cwd, platform, timeout_rate}
+}
+
+// NodeOS initialization function
+function NodeOS_Init() {
+  // Initialize WOW64
+  const wow64Info = wow64.initializeWow64Info();
+  let context = {}; // Example context object
+  wow64.initializeWow64Loader(context);
+
+  // Initialize subsystems
+  csrss.initializeCsrss();
+  pnp.initializePnp();
+  shell.initializeShell();
+
+  // Load and run an example executable
+  loader.loadExecutable("path/to/executable.exe");
+
+  console.log("NodeOS initialization complete");
+}
+
+// Export the initialization function
+module.exports = prepareCommandLine;
+
+// Initialize NodeOS
+NodeOS_Init();
+
+===================================================
+===================================================
+[d:\JSOS\loader\loader.js]
+
+const fs = require('fs');
+
+class Loader {
+    loadExecutable(executablePath) {
+        console.log("Loading executable:", executablePath);
+        const executable = fs.readFileSync(executablePath);
+        this.handlePEFormat(executable);
+    }
+
+    handlePEFormat(executable) {
+        console.log("Handling PE format for executable");
+        const sections = this.parsePEHeader(executable);
+        this.mapSections(sections);
+    }
+
+    allocateMemory(executable) {
+        console.log("Allocating memory for executable");
+    }
+
+    parsePEHeader(executable) {
+        console.log("Parsing PE header");
+        return [];
+    }
+
+    mapSections(sections) {
+        console.log("Mapping sections");
+    }
+}
+
+module.exports = new Loader();
+
+===================================================
+===================================================
+[d:\JSOS\logging\logging_manager.js]
+
+const fs = require('fs');
+const path = require('path');
+
+class LoggingManager {
+    constructor() {
+        this.logFilePath = path.join(__dirname, 'system.log');
+    }
+
+    initialize() {
+        console.log("Initializing Logging Manager...");
+        this._setupLogging();
+        console.log("Logging Manager initialized.");
+    }
+
+    _setupLogging() {
+        console.log("Setting up logging components...");
+        // Ensure log file exists
+        if (!fs.existsSync(this.logFilePath)) {
+            fs.writeFileSync(this.logFilePath, '', 'utf8');
+        }
+    }
+
+    log(message, level = 'INFO') {
+        const timestamp = new Date().toISOString();
+        const logMessage = `${timestamp} [${level}] ${message}\n`;
+        fs.appendFileSync(this.logFilePath, logMessage, 'utf8');
+        console.log(logMessage.trim());
+    }
+
+    error(message) {
+        this.log(message, 'ERROR');
+    }
+
+    warn(message) {
+        this.log(message, 'WARN');
+    }
+
+    info(message) {
+        this.log(message, 'INFO');
+    }
+
+    debug(message) {
+        this.log(message, 'DEBUG');
+    }
+
+    getLogs() {
+        return fs.readFileSync(this.logFilePath, 'utf8');
+    }
+
+    clearLogs() {
+        fs.writeFileSync(this.logFilePath, '', 'utf8');
+        console.log("Logs cleared.");
+    }
+}
+
+module.exports = LoggingManager;
+
+===================================================
+===================================================
+[d:\JSOS\memory\memory_manager.js]
+
+// d:\JSOS\memory\memory_manager.js
+
+class MemoryManager {
+    constructor() {
+        this.memoryMap = new Map(); // Maps processId to an array of memory blocks
+        this.pageTable = new Map();  // Simulates the page table for virtual memory management
+        this.swapSpace = [];         // Simulates swap space for memory swapping
+        this.totalMemory = 1024 * 1024 * 1024; // Total system memory: 1GB for example
+        this.freeMemory = this.totalMemory;    // Initially, all memory is free
+        this.memory = new Map(); // Initialize memory
+        this.nextAddress = 0x1000; // Initialize next address
+        this.pageSize = 4096; // Define page size
+    }
+
+    initialize() {
+        console.log("Initializing Memory Manager...");
+        this._initializeMemory();
+        console.log("Memory Manager initialized.");
+    }
+
+    _initializeMemory() {
+        console.log("Memory initialized with page table and swap space.");
+    }
+
+    allocateVirtualMemory(processId, baseAddress, zeroBits, allocationSize, allocationType, protect) {
+        if (this.freeMemory < allocationSize) {
+            throw new Error(`Insufficient memory to allocate ${allocationSize} bytes`);
+        }
+
+        console.log(`Allocating ${allocationSize} bytes for process ${processId}`);
+        if (!this.memoryMap.has(processId)) {
+            this.memoryMap.set(processId, []);
+        }
+
+        const memoryBlock = {
+            address: this._getFreeMemoryBlock(allocationSize),
+            size: allocationSize,
+            type: allocationType,
+            protect: protect
+        };
+
+        this.memoryMap.get(processId).push(memoryBlock);
+        this.freeMemory -= allocationSize;
+        return memoryBlock.address;
+    }
+
+    freeVirtualMemory(processId, baseAddress, regionSize, freeType) {
+        console.log(`Freeing memory at address ${baseAddress} for process ${processId}`);
+        const processMemory = this.memoryMap.get(processId);
+        if (processMemory) {
+            const index = processMemory.findIndex(block => block.address === baseAddress);
+            if (index !== -1) {
+                const memoryBlock = processMemory.splice(index, 1)[0];
+                this.freeMemory += memoryBlock.size;
+            }
+        }
+    }
+
+    _getFreeMemoryBlock(size) {
+        return this.nextAddress += size; // Update logic to allocate the next address block
+    }
+
+    handlePageFault(address) {
+        console.log(`Handling page fault at address ${address}`);
+    }
+
+    swapOut(processId) {
+        console.log(`Swapping out memory for process ${processId}`);
+        const processMemory = this.memoryMap.get(processId);
+        if (processMemory && processMemory.length > 0) {
+            const memoryBlock = processMemory.pop();
+            this.swapSpace.push(memoryBlock);
+            this.freeMemory += memoryBlock.size;
+            console.log(`Swapped out memory block of size ${memoryBlock.size} bytes for process ${processId}`);
+        } else {
+            console.log(`No memory to swap out for process ${processId}`);
+        }
+    }
+
+    swapIn(processId) {
+        console.log(`Swapping in memory for process ${processId}`);
+        if (this.swapSpace.length > 0) {
+            const memoryBlock = this.swapSpace.pop();
+            if (!this.memoryMap.has(processId)) {
+                this.memoryMap.set(processId, []);
+            }
+            this.memoryMap.get(processId).push(memoryBlock);
+            this.freeMemory -= memoryBlock.size;
+            console.log(`Swapped in memory block of size ${memoryBlock.size} bytes for process ${processId}`);
+        } else {
+            console.log(`No memory to swap in`);
+        }
+    }
+
+    getMemoryUsage() {
+        return {
+            totalMemory: this.totalMemory,
+            freeMemory: this.freeMemory,
+            usedMemory: this.totalMemory - this.freeMemory
+        };
+    }
+
+    getProcessMemoryInfo(processId) {
+        return this.memoryMap.get(processId) || [];
+    }
+
+    allocate(size) {
+        const address = this.nextAddress;
+        this.memory.set(address, new ArrayBuffer(size));
+        this.nextAddress += size;
+        console.log(`Allocated ${size} bytes at address ${address}`);
+        return address;
+    }
+
+    deallocate(address) {
+        if (this.memory.has(address)) {
+            this.memory.delete(address);
+            console.log(`Deallocated memory at address ${address}`);
+        } else {
+            console.error(`Address ${address} not found`);
+        }
+    }
+
+    getMemory(address) {
+        return this.memory.get(address);
+    }
+
+    // Paging functions
+    allocatePage() {
+        const pageAddress = this.nextAddress;
+        this.memory.set(pageAddress, new ArrayBuffer(this.pageSize));
+        this.nextAddress += this.pageSize;
+        console.log(`Allocated page of size ${this.pageSize} bytes at address ${pageAddress}`);
+        return pageAddress;
+    }
+
+    mapVirtualToPhysical(virtualAddress, physicalAddress) {
+        this.pageTable.set(virtualAddress, physicalAddress);
+        console.log(`Mapped virtual address ${virtualAddress} to physical address ${physicalAddress}`);
+    }
+
+    getPhysicalAddress(virtualAddress) {
+        return this.pageTable.get(virtualAddress);
+    }
+
+    // Memory protection and isolation
+    protectMemory(address, size, protectionFlags) {
+        console.log(`Protected ${size} bytes at address ${address} with flags ${protectionFlags}`);
+        // Implement the logic to set the appropriate protection flags
+    }
+}
+
+module.exports = MemoryManager;
+
+===================================================
+===================================================
+[d:\JSOS\network\network.js]
+
+const net = require('net');
+
+class Network {
+    initializeNetwork() {
+        console.log("Network initialized");
+    }
+
+    handleNetworkRequests(request) {
+        console.log("Handling network request:", request);
+    }
+}
+
+module.exports = new Network();
+
+===================================================
+===================================================
+[d:\JSOS\network\network_manager.js]
+
+const net = require('net');
+const os = require('os');
+
+class NetworkManager {
+    constructor() {
+        this.interfaces = new Map(); // Maps interface names to interface information
+        this.connections = new Map(); // Maps connection IDs to connection information
+        this.nextConnectionId = 1;
+    }
+
+    initialize() {
+        console.log("Initializing Network Manager...");
+        this._setupNetworkInterfaces();
+        console.log("Network Manager initialized.");
+    }
+
+    _setupNetworkInterfaces() {
+        console.log("Setting up network interfaces...");
+        const interfaces = os.networkInterfaces();
+        for (const [name, infos] of Object.entries(interfaces)) {
+            this.interfaces.set(name, infos);
+            console.log(`Interface ${name} set up with information:`, infos);
+        }
+    }
+
+    listInterfaces() {
+        console.log("Listing all network interfaces...");
+        return Array.from(this.interfaces.keys());
+    }
+
+    getInterfaceInfo(interfaceName) {
+        console.log(`Getting info for interface: ${interfaceName}`);
+        const info = this.interfaces.get(interfaceName);
+        if (!info) {
+            throw new Error(`Interface ${interfaceName} not found`);
+        }
+        return info;
+    }
+
+    createConnection(host, port) {
+        const connectionId = this.nextConnectionId++;
+        console.log(`Creating connection ${connectionId} to ${host}:${port}`);
+
+        const socket = new net.Socket();
+        socket.connect(port, host, () => {
+            console.log(`Connection ${connectionId} established to ${host}:${port}`);
+            this.connections.set(connectionId, { host, port, socket, status: 'connected' });
+        });
+
+        socket.on('data', (data) => {
+            console.log(`Data received on connection ${connectionId}: ${data}`);
+        });
+
+        socket.on('close', () => {
+            console.log(`Connection ${connectionId} closed`);
+            this.connections.delete(connectionId);
+        });
+
+        socket.on('error', (error) => {
+            console.error(`Error on connection ${connectionId}:`, error);
+            this.connections.delete(connectionId);
+        });
+
+        return connectionId;
+    }
+
+    closeConnection(connectionId) {
+        console.log(`Closing connection ${connectionId}`);
+        const connection = this.connections.get(connectionId);
+        if (!connection) {
+            throw new Error(`Connection ${connectionId} not found`);
+        }
+        connection.socket.destroy();
+        this.connections.delete(connectionId);
+        console.log(`Connection ${connectionId} closed`);
+    }
+
+    listConnections() {
+        console.log("Listing all network connections...");
+        return Array.from(this.connections.keys());
+    }
+
+    sendData(connectionId, data) {
+        console.log(`Sending data on connection ${connectionId}: ${data}`);
+        const connection = this.connections.get(connectionId);
+        if (!connection) {
+            throw new Error(`Connection ${connectionId} not found`);
+        }
+        connection.socket.write(data);
+    }
+}
+
+module.exports = NetworkManager;
+
+===================================================
+===================================================
+[d:\JSOS\pnp\pnp.js]
+
+class PNP {
+    constructor() {
+        this.devices = new Map();
+    }
+
+    initializePnp() {
+        console.log("PNP initialized");
+    }
+
+    manageDevices(deviceId, action) {
+        console.log(`Managing device ${deviceId} with action ${action}`);
+        const device = this.devices.get(deviceId);
+        if (device) {
+            switch(action) {
+                case 'enable':
+                    device.status = 'enabled';
+                    break;
+                case 'disable':
+                    device.status = 'disabled';
+                    break;
+                default:
+                    throw new Error(`Unsupported action: ${action}`);
+            }
+        } else {
+            console.error(`Device ${deviceId} not found`);
+        }
+    }
+
+    allocateResources(deviceId, resource) {
+        console.log(`Allocating resource ${resource} for device ${deviceId}`);
+        const device = this.devices.get(deviceId);
+        if (device) {
+            device.resources.push(resource);
+        } else {
+            console.error(`Device ${deviceId} not found`);
+        }
+    }
+
+    addDevice(deviceId, deviceInfo) {
+        console.log(`Adding device ${deviceId}`);
+        this.devices.set(deviceId, deviceInfo);
+    }
+
+    removeDevice(deviceId) {
+        console.log(`Removing device ${deviceId}`);
+        this.devices.delete(deviceId);
+    }
+
+    getDeviceInfo(deviceId) {
+        return this.devices.get(deviceId);
+    }
+}
+
+module.exports = new PNP();
+
+===================================================
+===================================================
+[d:\JSOS\pnp\pnp_manager.js]
+
+class PnPManager {
+    constructor() {
+        this.devices = new Map(); // Maps deviceId to device information
+        this.nextDeviceId = 1;
+    }
+
+    initialize() {
+        console.log("Initializing PnP Manager...");
+        this._setupPnP();
+        console.log("PnP Manager initialized.");
+    }
+
+    _setupPnP() {
+        console.log("Setting up PnP components...");
+        // Simulate setting up PnP components
+    }
+
+    addDevice(deviceInfo) {
+        const deviceId = this.nextDeviceId++;
+        console.log(`Adding device ${deviceId}: ${JSON.stringify(deviceInfo)}`);
+
+        const device = {
+            id: deviceId,
+            info: deviceInfo,
+            status: 'connected'
+        };
+
+        this.devices.set(deviceId, device);
+        console.log(`Device ${deviceId} added.`);
+        return deviceId;
+    }
+
+    removeDevice(deviceId) {
+        console.log(`Removing device ${deviceId}`);
+        const device = this.devices.get(deviceId);
+        if (!device) {
+            throw new Error(`Device with ID ${deviceId} not found`);
+        }
+        device.status = 'disconnected';
+        this.devices.delete(deviceId);
+        console.log(`Device ${deviceId} removed.`);
+    }
+
+    getDeviceInfo(deviceId) {
+        console.log(`Getting info for device ${deviceId}`);
+        const device = this.devices.get(deviceId);
+        if (!device) {
+            throw new Error(`Device with ID ${deviceId} not found`);
+        }
+        return device.info;
+    }
+
+    listDevices() {
+        console.log("Listing all devices...");
+        return Array.from(this.devices.values()).map(device => device.info);
+    }
+
+    handleDeviceRequest(deviceId, requestType, requestData) {
+        console.log(`Handling device request ${requestType} for device ${deviceId}`);
+        const device = this.devices.get(deviceId);
+        if (!device) {
+            throw new Error(`Device with ID ${deviceId} not found`);
+        }
+        // Implement request handling logic
+        switch (requestType) {
+            case 'read':
+                return this._readFromDevice(device, requestData);
+            case 'write':
+                return this._writeToDevice(device, requestData);
+            case 'control':
+                return this._controlDevice(device, requestData);
+            default:
+                throw new Error(`Unknown device request type: ${requestType}`);
+        }
+    }
+
+    _readFromDevice(device, requestData) {
+        console.log(`Reading from device ${device.id}`);
+        // Simulate reading data from device
+        return `Data read from device ${device.id}`;
+    }
+
+    _writeToDevice(device, requestData) {
+        console.log(`Writing to device ${device.id}`);
+        // Simulate writing data to device
+        return `Data written to device ${device.id}`;
+    }
+
+    _controlDevice(device, requestData) {
+        console.log(`Controlling device ${device.id}`);
+        // Simulate sending control commands to device
+        return `Device ${device.id} controlled with command ${requestData.command}`;
+    }
+}
+
+module.exports = PnPManager;
+
+===================================================
+===================================================
+[d:\JSOS\registry\registry.js]
+
+const fs = require('fs');
+const path = require('path');
+
+class RegistryManager {
+    constructor() {
+        this.registryFilePath = path.join(__dirname, 'registry.json');
+        this.registryData = {};
+    }
+
+    initialize() {
+        console.log("Initializing Registry Manager...");
+        this._loadRegistry();
+        console.log("Registry Manager initialized.");
+    }
+
+    _loadRegistry() {
+        try {
+            if (fs.existsSync(this.registryFilePath)) {
+                const data = fs.readFileSync(this.registryFilePath, 'utf8');
+                this.registryData = JSON.parse(data);
+                console.log("Registry loaded from file.");
+            } else {
+                this.registryData = {};
+                console.log("No registry file found, starting with empty registry.");
+            }
+        } catch (error) {
+            console.error("Failed to load registry:", error);
+            this.registryData = {};
+        }
+    }
+
+    _saveRegistry() {
+        try {
+            const data = JSON.stringify(this.registryData, null, 2);
+            fs.writeFileSync(this.registryFilePath, data, 'utf8');
+            console.log("Registry saved to file.");
+        } catch (error) {
+            console.error("Failed to save registry:", error);
+        }
+    }
+
+    createKey(key) {
+        if (this.registryData[key]) {
+            throw new Error(`Key "${key}" already exists`);
+        }
+        this.registryData[key] = {};
+        this._saveRegistry();
+        console.log(`Key "${key}" created.`);
+    }
+
+    deleteKey(key) {
+        if (!this.registryData[key]) {
+            throw new Error(`Key "${key}" not found`);
+        }
+        delete this.registryData[key];
+        this._saveRegistry();
+        console.log(`Key "${key}" deleted.`);
+    }
+
+    setValue(key, valueName, value) {
+        if (!this.registryData[key]) {
+            throw new Error(`Key "${key}" not found`);
+        }
+        this.registryData[key][valueName] = value;
+        this._saveRegistry();
+        console.log(`Value "${valueName}" set for key "${key}".`);
+    }
+
+    getValue(key, valueName) {
+        if (!this.registryData[key]) {
+            throw new Error(`Key "${key}" not found`);
+        }
+        return this.registryData[key][valueName];
+    }
+
+    deleteValue(key, valueName) {
+        if (!this.registryData[key]) {
+            throw new Error(`Key "${key}" not found`);
+        }
+        delete this.registryData[key][valueName];
+        this._saveRegistry();
+        console.log(`Value "${valueName}" deleted from key "${key}".`);
+    }
+
+    listKeys() {
+        return Object.keys(this.registryData);
+    }
+
+    listValues(key) {
+        if (!this.registryData[key]) {
+            throw new Error(`Key "${key}" not found`);
+        }
+        return Object.keys(this.registryData[key]);
+    }
+}
+
+module.exports = RegistryManager;
+
+===================================================
+===================================================
+[d:\JSOS\registry\registry_manager.js]
+
+const fs = require('fs');
+const path = require('path');
+
+class RegistryManager {
+    constructor() {
+        this.registryFilePath = path.join(__dirname, 'registry.json');
+        this.registryData = {};
+    }
+
+    initialize() {
+        console.log("Initializing Registry Manager...");
+        this._loadRegistry();
+        console.log("Registry Manager initialized.");
+    }
+
+    _loadRegistry() {
+        try {
+            if (fs.existsSync(this.registryFilePath)) {
+                const data = fs.readFileSync(this.registryFilePath, 'utf8');
+                this.registryData = JSON.parse(data);
+                console.log("Registry loaded from file.");
+            } else {
+                this.registryData = {};
+                console.log("No registry file found, starting with empty registry.");
+            }
+        } catch (error) {
+            console.error("Failed to load registry:", error);
+            this.registryData = {};
+        }
+    }
+
+    _saveRegistry() {
+        try {
+            const data = JSON.stringify(this.registryData, null, 2);
+            fs.writeFileSync(this.registryFilePath, data, 'utf8');
+            console.log("Registry saved to file.");
+        } catch (error) {
+            console.error("Failed to save registry:", error);
+        }
+    }
+
+    createKey(key) {
+        if (this.registryData[key]) {
+            throw new Error(`Key "${key}" already exists`);
+        }
+        this.registryData[key] = {};
+        this._saveRegistry();
+        console.log(`Key "${key}" created.`);
+    }
+
+    deleteKey(key) {
+        if (!this.registryData[key]) {
+            throw new Error(`Key "${key}" not found`);
+        }
+        delete this.registryData[key];
+        this._saveRegistry();
+        console.log(`Key "${key}" deleted.`);
+    }
+
+    setValue(key, valueName, value) {
+        if (!this.registryData[key]) {
+            throw new Error(`Key "${key}" not found`);
+        }
+        this.registryData[key][valueName] = value;
+        this._saveRegistry();
+        console.log(`Value "${valueName}" set for key "${key}".`);
+    }
+
+    getValue(key, valueName) {
+        if (!this.registryData[key]) {
+            throw new Error(`Key "${key}" not found`);
+        }
+        return this.registryData[key][valueName];
+    }
+
+    deleteValue(key, valueName) {
+        if (!this.registryData[key]) {
+            throw new Error(`Key "${key}" not found`);
+        }
+        delete this.registryData[key][valueName];
+        this._saveRegistry();
+        console.log(`Value "${valueName}" deleted from key "${key}".`);
+    }
+
+    listKeys() {
+        return Object.keys(this.registryData);
+    }
+
+    listValues(key) {
+        if (!this.registryData[key]) {
+            throw new Error(`Key "${key}" not found`);
+        }
+        return Object.keys(this.registryData[key]);
+    }
+
+    closeKey(key) {
+        // Placeholder for closing a key
+        console.log(`Registry key ${key} closed.`);
+    }
+}
+
+module.exports = RegistryManager;
+
+===================================================
+===================================================
+[d:\JSOS\security\security.js]
+
+// security.js - NodeOS security module in JavaScript
+
+// Function to initialize security
+function initializeSecurity() {
+    console.log("Security initialized");
+    // Implement security initialization logic
+}
+
+// Function to handle user authentication
+function authenticateUser(user, password) {
+    console.log("Authenticating user:", user);
+    // Implement authentication logic
+}
+
+// Function to check permissions
+function checkPermissions(user, resource) {
+    console.log("Checking permissions for user:", user, "on resource:", resource);
+    // Implement permission checking logic
+}
+
+module.exports = {
+    initializeSecurity,
+    authenticateUser,
+    checkPermissions
+};
+
+===================================================
+===================================================
+[d:\JSOS\security\security_manager.js]
+
+const crypto = require('crypto');
+
+class SecurityManager {
+    constructor() {
+        this.users = new Map();
+        this.permissions = new Map();
+    }
+
+    initialize() {
+        console.log("Initializing Security Manager...");
+        this._setupDefaultUsers();
+        this._setupDefaultPermissions();
+        console.log("Security Manager initialized.");
+    }
+
+    _setupDefaultUsers() {
+        console.log("Setting up default users...");
+        // Default users with hashed passwords
+        this.users.set('admin', { password: this._hashPassword('admin123'), role: 'admin' });
+        this.users.set('user', { password: this._hashPassword('user123'), role: 'user' });
+    }
+
+    _setupDefaultPermissions() {
+        console.log("Setting up default permissions...");
+        // Default permissions
+        this.permissions.set('admin', ['read', 'write', 'delete']);
+        this.permissions.set('user', ['read']);
+    }
+
+    _hashPassword(password) {
+        return crypto.createHash('sha256').update(password).digest('hex');
+    }
+
+    authenticate(username, password) {
+        const user = this.users.get(username);
+        const hashedPassword = this._hashPassword(password);
+        if (user && user.password === hashedPassword) {
+            console.log(`User ${username} authenticated successfully.`);
+            return true;
+        } else {
+            console.error(`Authentication failed for user ${username}.`);
+            return false;
+        }
+    }
+
+    addUser(username, password, role = 'user') {
+        if (this.users.has(username)) {
+            throw new Error(`User ${username} already exists.`);
+        }
+        const hashedPassword = this._hashPassword(password);
+        this.users.set(username, { password: hashedPassword, role });
+        console.log(`User ${username} added successfully.`);
+    }
+
+    removeUser(username) {
+        if (this.users.has(username)) {
+            this.users.delete(username);
+            console.log(`User ${username} removed successfully.`);
+        } else {
+            console.error(`User ${username} not found.`);
+        }
+    }
+
+    addPermission(username, resource, permission) {
+        if (!this.permissions.has(resource)) {
+            this.permissions.set(resource, new Map());
+        }
+        this.permissions.get(resource).set(username, permission);
+        console.log(`Permission ${permission} for resource ${resource} added to user ${username}.`);
+    }
+
+    checkPermission(username, resource, permission) {
+        if (this.permissions.has(resource) && this.permissions.get(resource).get(username) === permission) {
+            console.log(`User ${username} has ${permission} permission for resource ${resource}.`);
+            return true;
+        } else {
+            console.error(`User ${username} does not have ${permission} permission for resource ${resource}.`);
+            return false;
+        }
+    }
+
+    secureIPC(sender, receiver, message) {
+        console.log(`Securing IPC from ${sender} to ${receiver}`);
+        const encryptedMessage = `encrypted(${message})`;
+        console.log(`Encrypted message: ${encryptedMessage}`);
+        this.sendMessage(receiver, encryptedMessage);
+    }
+
+    sendMessage(receiver, message) {
+        console.log(`Sending message to ${receiver}: ${message}`);
+    }
+}
+
+module.exports = SecurityManager;
+
+===================================================
+===================================================
+[d:\JSOS\security\user_manager.js]
+
+const crypto = require('crypto');
+
+class UserManager {
+    constructor() {
+        this.users = new Map(); // Maps username to user information (password hash, roles, etc.)
+        this.groups = new Map(); // Maps group name to list of usernames
+    }
+
+    initialize() {
+        console.log("Initializing User Manager...");
+        this._setupDefaultUsersAndGroups();
+        console.log("User Manager initialized.");
+    }
+
+    _setupDefaultUsersAndGroups() {
+        console.log("Setting up default users and groups...");
+        // Add a default admin user and group
+        this.addUser('admin', 'adminpassword', ['admin']);
+        this.addGroup('admins', ['admin']);
+    }
+
+    _hashPassword(password, salt) {
+        return crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+    }
+
+    addUser(username, password, roles = []) {
+        if (this.users.has(username)) {
+            throw new Error('User already exists');
+        }
+        const salt = crypto.randomBytes(16).toString('hex');
+        const hash = this._hashPassword(password, salt);
+        this.users.set(username, { hash, salt, roles });
+        console.log(`User ${username} added.`);
+    }
+
+    removeUser(username) {
+        if (!this.users.has(username)) {
+            throw new Error('User not found');
+        }
+        this.users.delete(username);
+        console.log(`User ${username} removed.`);
+    }
+
+    authenticate(username, password) {
+        const user = this.users.get(username);
+        if (!user) {
+            throw new Error('User not found');
+        }
+        const hash = this._hashPassword(password, user.salt);
+        if (hash !== user.hash) {
+            throw new Error('Invalid password');
+        }
+        return true;
+    }
+
+    changePassword(username, oldPassword, newPassword) {
+        if (this.authenticate(username, oldPassword)) {
+            const salt = crypto.randomBytes(16).toString('hex');
+            const hash = this._hashPassword(newPassword, salt);
+            this.users.set(username, { ...this.users.get(username), hash, salt });
+            console.log(`Password changed for user ${username}`);
+        }
+    }
+
+    addGroup(groupName, members = []) {
+        if (this.groups.has(groupName)) {
+            throw new Error('Group already exists');
+        }
+        this.groups.set(groupName, new Set(members));
+        console.log(`Group ${groupName} added with members: ${members.join(', ')}`);
+    }
+
+    removeGroup(groupName) {
+        if (!this.groups.has(groupName)) {
+            throw new Error('Group not found');
+        }
+        this.groups.delete(groupName);
+        console.log(`Group ${groupName} removed.`);
+    }
+
+    addUserToGroup(username, groupName) {
+        if (!this.groups.has(groupName)) {
+            throw new Error('Group not found');
+        }
+        const group = this.groups.get(groupName);
+        group.add(username);
+        console.log(`User ${username} added to group ${groupName}`);
+    }
+
+    removeUserFromGroup(username, groupName) {
+        if (!this.groups.has(groupName)) {
+            throw new Error('Group not found');
+        }
+        const group = this.groups.get(groupName);
+        group.delete(username);
+        console.log(`User ${username} removed from group ${groupName}`);
+    }
+
+    listUsers() {
+        return Array.from(this.users.keys());
+    }
+
+    listGroups() {
+        return Array.from(this.groups.keys());
+    }
+
+    getUserInfo(username) {
+        const user = this.users.get(username);
+        if (!user) {
+            throw new Error('User not found');
+        }
+        return { username, roles: user.roles };
+    }
+
+    getGroupInfo(groupName) {
+        const group = this.groups.get(groupName);
+        if (!group) {
+            throw new Error('Group not found');
+        }
+        return { groupName, members: Array.from(group) };
+    }
+}
+
+module.exports = UserManager;
+
+===================================================
+===================================================
+[d:\JSOS\services\services.js]
+
+// services.js - NodeOS services module in JavaScript
+
+// Function to initialize services
+function initializeServices() {
+    console.log("Services initialized");
+    // Implement services initialization logic
+}
+
+// Function to start a service
+function startService(serviceName) {
+    console.log("Starting service:", serviceName);
+    // Implement service start logic
+}
+
+// Function to stop a service
+function stopService(serviceName) {
+    console.log("Stopping service:", serviceName);
+    // Implement service stop logic
+}
+
+module.exports = {
+    initializeServices,
+    startService,
+    stopService
+};
+
+===================================================
+===================================================
+[d:\JSOS\services\service_manager.js]
+
+class ServiceManager {
+    constructor() {
+        this.services = new Map(); // Maps serviceName to service information
+        this.nextServiceId = 1;
+    }
+
+    initialize() {
+        console.log("Initializing Service Manager...");
+        this._setupServices();
+        console.log("Service Manager initialized.");
+    }
+
+    _setupServices() {
+        console.log("Setting up services...");
+        // Simulate setting up initial services
+    }
+
+    addService(serviceName, serviceExecutable, options) {
+        const serviceId = this.nextServiceId++;
+        console.log(`Adding service ${serviceId}: ${serviceName}`);
+
+        const serviceInfo = {
+            id: serviceId,
+            name: serviceName,
+            executable: serviceExecutable,
+            options,
+            status: 'stopped'
+        };
+
+        this.services.set(serviceName, serviceInfo);
+        console.log(`Service ${serviceName} added.`);
+        return serviceId;
+    }
+
+    removeService(serviceName) {
+        console.log(`Removing service ${serviceName}`);
+        const service = this.services.get(serviceName);
+        if (!service) {
+            throw new Error(`Service ${serviceName} not found`);
+        }
+        service.status = 'removed';
+        this.services.delete(serviceName);
+        console.log(`Service ${serviceName} removed.`);
+    }
+
+    startService(serviceName) {
+        console.log(`Starting service ${serviceName}`);
+        const service = this.services.get(serviceName);
+        if (!service) {
+            throw new Error(`Service ${serviceName} not found`);
+        }
+        // Simulate starting the service
+        service.status = 'running';
+        console.log(`Service ${serviceName} started.`);
+    }
+
+    stopService(serviceName) {
+        console.log(`Stopping service ${serviceName}`);
+        const service = this.services.get(serviceName);
+        if (!service) {
+            throw new Error(`Service ${serviceName} not found`);
+        }
+        // Simulate stopping the service
+        service.status = 'stopped';
+        console.log(`Service ${serviceName} stopped.`);
+    }
+
+    getServiceInfo(serviceName) {
+        console.log(`Getting info for service ${serviceName}`);
+        const service = this.services.get(serviceName);
+        if (!service) {
+            throw new Error(`Service ${serviceName} not found`);
+        }
+        return service;
+    }
+
+    listServices() {
+        console.log("Listing all services...");
+        return Array.from(this.services.values());
+    }
+}
+
+module.exports = ServiceManager;
+
+===================================================
+===================================================
+[d:\JSOS\shell\append.js]
+
+module.exports = function appendCommand(args) {
+    if (args.length === 0) {
+        console.log('Usage: APPEND [path]');
+        return;
+    }
+    const path = args[0];
+    // Here you would implement the actual functionality
+    console.log(`Append path set to: ${path}`);
+};
+
+===================================================
+===================================================
+[d:\JSOS\shell\assign.js]
+
+module.exports = function assignCommand(args) {
+    if (args.length < 2) {
+        console.log('Usage: ASSIGN drive1 drive2');
+        return;
+    }
+    const [drive1, drive2] = args;
+    // Here you would implement the actual functionality
+    console.log(`Drive ${drive1} assigned to ${drive2}`);
+};
+
+===================================================
+===================================================
+[d:\JSOS\shell\attrib.js]
+
+module.exports = function attribCommand(args) {
+    if (args.length === 0) {
+        console.log('Usage: ATTRIB [path]');
+        return;
+    }
+    const path = args[0];
+    // Here you would implement the actual functionality
+    console.log(`Attributes of ${path} displayed/modified`);
+};
+
+===================================================
+===================================================
+[d:\JSOS\shell\break.js]
+
+module.exports = function breakCommand() {
+    console.log('BREAK: Ctrl+Break checking enabled/disabled');
+};
+
+===================================================
+===================================================
+[d:\JSOS\shell\call.js]
+
+module.exports = function callCommand(args) {
+    if (args.length === 0) {
+        console.log('Usage: CALL [batchfile]');
+        return;
+    }
+    const batchfile = args[0];
+    // Here you would implement the actual functionality
+    console.log(`Calling batch file: ${batchfile}`);
+};
+
+===================================================
+===================================================
+[d:\JSOS\shell\chcp.js]
+
+module.exports = function chcpCommand(args) {
+    if (args.length === 0) {
+        console.log('Current code page: 437');
+        return;
+    }
+    const codePage = args[0];
+    // Here you would implement the actual functionality
+    console.log(`Code page set to: ${codePage}`);
+};
+
+===================================================
+===================================================
+[d:\JSOS\shell\chkdsk.js]
+
+module.exports = function chkdskCommand(args) {
+    if (args.length === 0) {
+        console.log('Usage: CHKDSK [drive]');
+        return;
+    }
+    const drive = args[0];
+    // Here you would implement the actual functionality
+    console.log(`CHKDSK performed on drive: ${drive}`);
+};
+
+===================================================
+===================================================
+[d:\JSOS\shell\choice.js]
+
+module.exports = function choiceCommand(args) {
+    if (args.length === 0) {
+        console.log('Usage: CHOICE [options]');
+        return;
+    }
+    const options = args.join(' ');
+    // Here you would implement the actual functionality
+    console.log(`CHOICE options: ${options}`);
+};
+
+===================================================
+===================================================
+[d:\JSOS\shell\cls.js]
+
+module.exports = function clsCommand() {
+    process.stdout.write('\x1Bc');
+};
+
+===================================================
+===================================================
+[d:\JSOS\shell\commands.js]
+
+const fs = require('fs');
+const path = require('path');
+
+function dirCommand(args) {
+    const directoryPath = args[0] || '.';
+    const files = fs.readdirSync(directoryPath);
+    files.forEach(file => {
+        const stats = fs.statSync(file);
+        if (stats.isFile()) {
+            console.log(`FILE ${file}`);
+        } else if (stats.isDirectory()) {
+            console.log(`DIR  ${file}`);
+        }
+    });
+}
+
+function mkdirCommand(args) {
+    const [dirName] = args;
+    if (!fs.existsSync(dirName)) {
+        fs.mkdirSync(dirName);
+        console.log(`Directory created: ${dirName}`);
+    } else {
+        console.log(`Directory ${dirName} already exists.`);
+    }
+}
+
+function copyCommand(args) {
+    const [source, destination] = args;
+    if (fs.existsSync(source)) {
+        fs.copyFileSync(source, destination);
+        console.log(`Copied ${source} to ${destination}`);
+    } else {
+        console.log(`Source file ${source} does not exist.`);
+    }
+}
+
+function delCommand(args) {
+    const [fileName] = args;
+    if (fs.existsSync(fileName)) {
+        fs.unlinkSync(fileName);
+        console.log(`Deleted ${fileName}`);
+    } else {
+        console.log(`File ${fileName} does not exist.`);
+    }
+}
+
+function rmdirCommand(args) {
+    const [dirName] = args;
+    if (fs.existsSync(dirName)) {
+        fs.rmdirSync(dirName, { recursive: true });
+        console.log(`Directory removed: ${dirName}`);
+    } else {
+        console.log(`Directory ${dirName} does not exist.`);
+    }
+}
+
+function clsCommand() {
+    process.stdout.write('\x1Bc');
+}
+
+function pauseCommand(callback) {
+    console.log('Press any key to continue...');
+    process.stdin.setRawMode(true);
+    process.stdin.once('data', () => {
+        process.stdin.setRawMode(false);
+        callback();
+    });
+}
+
+module.exports = {
+    dirCommand,
+    mkdirCommand,
+    copyCommand,
+    delCommand,
+    rmdirCommand,
+    clsCommand,
+    pauseCommand
+};
+
+===================================================
+===================================================
+[d:\JSOS\shell\copy.js]
+
+const fs = require('fs');
+
+function copyCommand(args) {
+    const [source, destination] = args;
+
+    try {
+        fs.copyFileSync(source, destination);
+        console.log(`Copied ${source} to ${destination}`);
+    } catch (error) {
+        console.error(`Error copying file from ${source} to ${destination}:`, error.message);
+    }
+}
+
+module.exports = copyCommand;
+
+===================================================
+===================================================
+[d:\JSOS\shell\del.js]
+
+const fs = require('fs');
+
+function delCommand(args) {
+    const filePath = args[0];
+
+    try {
+        fs.unlinkSync(filePath);
+        console.log(`Deleted ${filePath}`);
+    } catch (error) {
+        console.error(`Error deleting file ${filePath}:`, error.message);
+    }
+}
+
+module.exports = delCommand;
+
+===================================================
+===================================================
+[d:\JSOS\shell\dir.js]
+
+const fs = require('fs');
+const path = require('path');
+
+function dirCommand(args) {
+    const [dirPath = '.'] = args;
+    if (!fs.existsSync(dirPath)) {
+        console.log(`Directory ${dirPath} does not exist.`);
+        return;
+    }
+    const files = fs.readdirSync(dirPath);
+    files.forEach(file => {
+        const fullPath = path.join(dirPath, file);
+        const stats = fs.statSync(fullPath);
+        if (stats.isFile()) {
+            console.log(`FILE ${file}`);
+        } else if (stats.isDirectory()) {
+            console.log(`DIR  ${file}`);
+        }
+    });
+}
+
+module.exports = dirCommand;
+
+===================================================
+===================================================
+[d:\JSOS\shell\interactive_shell.js]
+
+const readline = require('readline');
+const Shell = require('./shell');
+
+class InteractiveShell {
+    constructor() {
+        this.shell = new Shell();
+        this.rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+            prompt: 'JSOS> '
+        });
+    }
+
+    initialize() {
+        console.log("Initializing Interactive Shell...");
+        this.shell.initialize();
+        this._setupInteractiveShell();
+    }
+
+    _setupInteractiveShell() {
+        this.rl.prompt();
+
+        this.rl.on('line', (line) => {
+            const input = line.trim();
+            this.shell._handleInput(input);
+            this.rl.prompt();
+        });
+
+        this.rl.on('close', () => {
+            console.log('Interactive Shell closed.');
+            process.exit(0);
+        });
+    }
+}
+
+const interactiveShell = new InteractiveShell();
+interactiveShell.initialize();
+
+===================================================
+===================================================
+[d:\JSOS\shell\mkdir.js]
+
+const fs = require('fs');
+
+function mkdirCommand(args) {
+    const dirPath = args[0];
+
+    try {
+        fs.mkdirSync(dirPath);
+        console.log(`Directory created: ${dirPath}`);
+    } catch (error) {
+        console.error(`Error creating directory ${dirPath}:`, error.message);
+    }
+}
+
+module.exports = mkdirCommand;
+
+===================================================
+===================================================
+[d:\JSOS\shell\pause.js]
+
+module.exports = function pauseCommand(callback) {
+    console.log('Press any key to continue...');
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.once('data', () => {
+        process.stdin.setRawMode(false);
+        process.stdin.pause();
+        if (callback) callback();
+    });
+};
+
+===================================================
+===================================================
+[d:\JSOS\shell\rmdir.js]
+
+const fs = require('fs');
+
+function rmdirCommand(args) {
+    const dirPath = args[0];
+
+    try {
+        fs.rmdirSync(dirPath);
+        console.log(`Directory removed: ${dirPath}`);
+    } catch (error) {
+        console.error(`Error removing directory ${dirPath}:`, error.message);
+    }
+}
+
+module.exports = rmdirCommand;
+
+===================================================
+===================================================
+[d:\JSOS\shell\shell.js]
+
+const readline = require('readline');
+const Kernel = require('../kernel/kernel.js');
+const commands = require('./commands');
+const fs = require('fs');
+const path = require('path');
+
+class Shell {
+    constructor(fileSystemManager) {
+        this.kernel = new Kernel(fileSystemManager);
+        this.rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+            prompt: 'JSOS> '
+        });
+        this.currentDir = process.cwd();
+        this.commandQueue = [];
+        this.processingCommand = false;
+
+        // Bind the method to the instance
+        this._handleInput = this._handleInput.bind(this);
+    }
+
+    initialize() {
+        console.log("Initializing Shell...");
+        this.kernel.initialize();
+        this._setupShell();
+        console.log("Shell initialized.");
+    }
+
+    _setupShell() {
+        this.rl.prompt();
+
+        this.rl.on('line', (line) => {
+            const input = line.trim();
+            this._handleInput(input);
+            this.rl.prompt();
+        });
+
+        this.rl.on('close', () => {
+            console.log('Shell closed.');
+            process.exit(0);
+        });
+    }
+
+    _handleInput(input) {
+        const [command, ...args] = input.split(' ');
+        switch (command.toLowerCase()) {
+            case 'exit':
+                this.rl.close();
+                break;
+            case 'createprocess':
+                this._createProcess(args);
+                break;
+            case 'terminateprocess':
+                this._terminateProcess(args);
+                break;
+            case 'allocatememory':
+                this._allocateMemory(args);
+                break;
+            case 'freememory':
+                this._freeMemory(args);
+                break;
+            case 'createfile':
+                this._createFile(args);
+                break;
+            case 'readfile':
+                this._readFile(args);
+                break;
+            case 'writefile':
+                this._writeFile(args);
+                break;
+            case 'deletefile':
+                this._deleteFile(args);
+                break;
+            case 'listprocesses':
+                this._listProcesses();
+                break;
+            case 'dir':
+                this._dir(args);
+                break;
+            case 'mkdir':
+                commands.mkdirCommand(args);
+                break;
+            case 'copy':
+                commands.copyCommand(args);
+                break;
+            case 'del':
+                commands.delCommand(args);
+                break;
+            case 'rmdir':
+                commands.rmdirCommand(args);
+                break;
+            case 'cls':
+                commands.clsCommand();
+                break;
+            case 'pause':
+                commands.pauseCommand(() => this.rl.prompt());
+                break;
+            case 'echo':
+                this._echo(args);
+                break;
+            case 'cd':
+                this._cd(args);
+                break;
+            default:
+                console.log(`Unknown command: ${command}`);
+                break;
+        }
+    }
+
+    _createProcess(args) {
+        const [desiredAccess, objectAttributes, parentProcessId, inheritObjectTable, sectionHandle, debugPort, exceptionPort] = args;
+        const processId = this.kernel.handleSystemCall('createProcess', [desiredAccess, objectAttributes, parentProcessId, inheritObjectTable, sectionHandle, debugPort, exceptionPort]);
+        console.log(`Process created with ID ${processId}`);
+    }
+
+    _terminateProcess(args) {
+        const [processId] = args;
+        this.kernel.handleSystemCall('terminateProcess', [processId]);
+        console.log(`Process ${processId} terminated`);
+    }
+
+    _allocateMemory(args) {
+        const [processId, baseAddress, zeroBits, allocationSize, allocationType, protect] = args;
+        const memoryAddress = this.kernel.handleSystemCall('allocateMemory', [processId, baseAddress, zeroBits, allocationSize, allocationType, protect]);
+        console.log(`Memory allocated at address ${memoryAddress} for process ${processId}`);
+    }
+
+    _freeMemory(args) {
+        const [processId, baseAddress, regionSize, freeType] = args;
+        this.kernel.handleSystemCall('freeMemory', [processId, baseAddress, regionSize, freeType]);
+        console.log(`Memory at address ${baseAddress} for process ${processId} freed`);
+    }
+
+    _createFile(args) {
+        const [filePath, options] = args;
+        const fileHandle = this.kernel.handleSystemCall('createFile', [filePath, options]);
+        console.log(`File created with handle ${fileHandle}`);
+    }
+
+    _readFile(args) {
+        const [fileHandle, buffer, offset, length, position] = args;
+        const bytesRead = this.kernel.handleSystemCall('readFile', [fileHandle, Buffer.alloc(parseInt(buffer)), parseInt(offset), parseInt(length), parseInt(position)]);
+        console.log(`Read ${bytesRead} bytes from file with handle ${fileHandle}`);
+    }
+
+    _writeFile(args) {
+        const [fileHandle, data, offset, length, position] = args;
+        const buffer = Buffer.from(data);
+        const bytesWritten = this.kernel.handleSystemCall('writeFile', [fileHandle, buffer, parseInt(offset), parseInt(length), parseInt(position)]);
+        console.log(`Wrote ${bytesWritten} bytes to file with handle ${fileHandle}`);
+    }
+
+    _deleteFile(args) {
+        const [filePath] = args;
+        this.kernel.handleSystemCall('deleteFile', [filePath]);
+        console.log(`File ${filePath} deleted`);
+    }
+
+    _listProcesses() {
+        const processes = this.kernel.processManager.processTable;
+        console.log("List of processes:");
+        for (const [processId, processInfo] of processes.entries()) {
+            console.log(`Process ID: ${processId}, Info: ${JSON.stringify(processInfo)}`);
+        }
+    }
+
+    _dir(args) {
+        const directoryPath = args[0] || '.';
+        const files = fs.readdirSync(directoryPath);
+        files.forEach(file => {
+            const stats = fs.statSync(file);
+            if (stats.isFile()) {
+                console.log(`FILE ${file}`);
+            } else if (stats.isDirectory()) {
+                console.log(`DIR  ${file}`);
+            }
+        });
+    }
+
+    _echo(args) {
+        console.log(args.join(' '));
+    }
+
+    _cd(args) {
+        const [dirPath] = args;
+        if (!dirPath) {
+            console.log(process.cwd());
+            return;
+        }
+        try {
+            process.chdir(dirPath);
+            console.log(`New directory: ${process.cwd()}`);
+        } catch (err) {
+            console.log(`chdir: ${err.message}`);
+        }
+    }
+}
+
+module.exports = Shell;
+
+===================================================
+===================================================
+[d:\JSOS\subsys\csrss.js]
+
+class CSRSS {
+    constructor() {
+        this.processes = new Map(); // Maps processId to client information
+    }
+
+    initialize() {
+        console.log("Initializing CSRSS...");
+        this._setupCsrss();
+        console.log("CSRSS initialized.");
+    }
+
+    _setupCsrss() {
+        console.log("Setting up CSRSS components...");
+        // Simulate setting up CSRSS components
+    }
+
+    handleClientRequest(requestType, requestData) {
+        console.log(`Handling CSRSS client request: ${requestType}`);
+        // Detailed client request handling logic
+        switch (requestType) {
+            case 'createProcess':
+                return this.createProcess(requestData.processId, requestData.processInfo);
+            case 'terminateProcess':
+                return this.terminateProcess(requestData.processId);
+            case 'getProcessInfo':
+                return this.getProcessInfo(requestData.processId);
+            case 'sendMessage':
+                return this.sendMessage(requestData.processId, requestData.message);
+            default:
+                throw new Error(`Unknown CSRSS client request type: ${requestType}`);
+        }
+    }
+
+    createProcess(processId, processInfo) {
+        console.log(`Creating process ${processId} with info: ${JSON.stringify(processInfo)}`);
+        if (this.processes.has(processId)) {
+            throw new Error(`Process with ID ${processId} already exists`);
+        }
+        this.processes.set(processId, { ...processInfo, status: 'running' });
+        console.log(`Process ${processId} created`);
+        return processId;
+    }
+
+    terminateProcess(processId) {
+        console.log(`Terminating process ${processId}`);
+        const process = this.processes.get(processId);
+        if (!process) {
+            throw new Error(`Process with ID ${processId} not found`);
+        }
+        process.status = 'terminated';
+        this.processes.delete(processId);
+        console.log(`Process ${processId} terminated`);
+    }
+
+    getProcessInfo(processId) {
+        console.log(`Getting info for process ${processId}`);
+        const process = this.processes.get(processId);
+        if (!process) {
+            throw new Error(`Process with ID ${processId} not found`);
+        }
+        return process;
+    }
+
+    sendMessage(processId, message) {
+        console.log(`Sending message to process ${processId}: ${message}`);
+        const process = this.processes.get(processId);
+        if (!process) {
+            throw new Error(`Process with ID ${processId} not found`);
+        }
+        // Simulate sending a message to the process
+        process.messageQueue = process.messageQueue || [];
+        process.messageQueue.push(message);
+        console.log(`Message sent to process ${processId}`);
+    }
+
+    listProcesses() {
+        console.log("Listing all processes...");
+        return Array.from(this.processes.keys());
+    }
+}
+
+module.exports = CSRSS;
+
+===================================================
+===================================================
+[d:\JSOS\subsys\smss.js]
+
+class SMSS {
+    constructor() {
+        this.sessions = new Map();
+        this.nextSessionId = 1;
+    }
+
+    initialize() {
+        console.log("Initializing SMSS...");
+        this._setupSmss();
+        console.log("SMSS initialized.");
+    }
+
+    _setupSmss() {
+        console.log("Setting up SMSS components...");
+        // Simulate setting up SMSS components
+    }
+
+    handleClientRequest(requestType, requestData) {
+        console.log(`Handling SMSS client request: ${requestType}`);
+        // Detailed client request handling logic
+        switch (requestType) {
+            case 'createSession':
+                return this.createSession(requestData.sessionInfo);
+            case 'terminateSession':
+                return this.terminateSession(requestData.sessionId);
+            case 'getSessionInfo':
+                return this.getSessionInfo(requestData.sessionId);
+            default:
+                throw new Error(`Unknown SMSS client request type: ${requestType}`);
+        }
+    }
+
+    createSession(sessionInfo) {
+        const sessionId = this.nextSessionId++;
+        console.log(`Creating session ${sessionId} with info: ${JSON.stringify(sessionInfo)}`);
+        this.sessions.set(sessionId, { ...sessionInfo, status: 'active' });
+        console.log(`Session ${sessionId} created.`);
+        return sessionId;
+    }
+
+    terminateSession(sessionId) {
+        console.log(`Terminating session ${sessionId}`);
+        const session = this.sessions.get(sessionId);
+        if (!session) {
+            throw new Error(`Session with ID ${sessionId} not found`);
+        }
+        session.status = 'terminated';
+        this.sessions.delete(sessionId);
+        console.log(`Session ${sessionId} terminated.`);
+    }
+
+    getSessionInfo(sessionId) {
+        console.log(`Getting info for session ${sessionId}`);
+        const session = this.sessions.get(sessionId);
+        if (!session) {
+            throw new Error(`Session with ID ${sessionId} not found`);
+        }
+        return session;
+    }
+
+    listSessions() {
+        console.log("Listing all sessions...");
+        return Array.from(this.sessions.keys());
+    }
+}
+
+module.exports = SMSS;
+
+===================================================
+===================================================
+[d:\JSOS\subsys\subsys_manager.js]
+
+const Win32Subsystem = require('./win32_subsystem');
+const CSRSS = require('./csrss');
+const SMSS = require('./smss');
+
+class SubsystemManager {
+    constructor() {
+        this.subsystems = new Map();
+        this.subsystemStatus = new Map();
+    }
+
+    initialize() {
+        console.log("Initializing Subsystem Manager...");
+        try {
+            this._initializeSubsystems();
+            console.log("Subsystem Manager initialized successfully.");
+        } catch (error) {
+            console.error("Error initializing Subsystem Manager:", error);
+            throw error;
+        }
+    }
+
+    _initializeSubsystems() {
+        console.log("Setting up subsystems...");
+
+        this._initializeSubsystem('CSRSS', CSRSS);
+        this._initializeSubsystem('SMSS', SMSS);
+        this._initializeSubsystem('Win32', Win32Subsystem);
+
+        // Additional subsystems can be initialized here
+    }
+
+    _initializeSubsystem(name, SubsystemClass) {
+        console.log(`Initializing ${name} subsystem...`);
+        const subsystem = new SubsystemClass();
+        subsystem.initialize();
+        this.subsystems.set(name, subsystem);
+        this.subsystemStatus.set(name, 'initialized');
+        console.log(`${name} subsystem initialized.`);
+    }
+
+    getSubsystem(name) {
+        console.log(`Retrieving subsystem: ${name}`);
+        const subsystem = this.subsystems.get(name);
+        if (!subsystem) {
+            throw new Error(`Subsystem ${name} not found`);
+        }
+        return subsystem;
+    }
+
+    sendSubsystemRequest(subsystemName, requestType, requestData) {
+        console.log(`Sending request to subsystem ${subsystemName}: ${requestType}`);
+        const subsystem = this.getSubsystem(subsystemName);
+        return subsystem.handleClientRequest(requestType, requestData);
+    }
+
+    listSubsystems() {
+        console.log("Listing all subsystems...");
+        return Array.from(this.subsystems.keys());
+    }
+
+    getSubsystemStatus(subsystemName) {
+        console.log(`Getting status for subsystem: ${subsystemName}`);
+        const status = this.subsystemStatus.get(subsystemName);
+        if (!status) {
+            throw new Error(`Status for subsystem ${subsystemName} not found`);
+        }
+        return status;
+    }
+}
+
+module.exports = SubsystemManager;
+
+===================================================
+===================================================
+[d:\JSOS\subsys\win32_subsystem.js]
+
+const fs = require('fs');
+const ProcessManager = require('../kernel/process_manager');
+const RegistryManager = require('../registry/registry_manager');
+
+class Win32Subsystem {
+    constructor() {
+        this.processManager = new ProcessManager();
+        this.registryManager = new RegistryManager();
+    }
+
+    initialize() {
+        console.log("Initializing Win32 Subsystem...");
+        this.processManager.initialize();
+        this.registryManager.initialize();
+        this._setupWin32();
+        console.log("Win32 Subsystem initialized.");
+    }
+
+    _setupWin32() {
+        console.log("Setting up Win32 components...");
+        // Simulate setting up Win32 components
+    }
+
+    createProcess(pid, processInfo) {
+        return this.processManager.createProcess(pid, processInfo.priority);
+    }
+
+    terminateProcess(pid) {
+        return this.processManager.terminateProcess(pid);
+    }
+
+    getProcessInfo(pid) {
+        return this.processManager.listProcesses().find(p => p.pid === pid);
+    }
+
+    sendMessage(pid, message) {
+        this.processManager.sendMessage(pid, message);
+    }
+
+    handleApiCall(apiName, args) {
+        switch (apiName) {
+            case 'CreateFile':
+                return this._createFile(...args);
+            case 'ReadFile':
+                return this._readFile(...args);
+            case 'WriteFile':
+                return this._writeFile(...args);
+            case 'CloseHandle':
+                return this._closeHandle(...args);
+            case 'DeleteFile':
+                return this._deleteFile(...args);
+            case 'MoveFile':
+                return this._moveFile(...args);
+            case 'GetFileAttributes':
+                return this._getFileAttributes(...args);
+            case 'CopyFile':
+                return this._copyFile(...args);
+            case 'MoveFileEx':
+                return this._moveFileEx(...args);
+            case 'RegCreateKeyEx':
+                return this._regCreateKeyEx(...args);
+            case 'RegSetValueEx':
+                return this._regSetValueEx(...args);
+            case 'RegOpenKeyEx':
+                return this._regOpenKeyEx(...args);
+            case 'RegQueryValueEx':
+                return this._regQueryValueEx(...args);
+            case 'RegCloseKey':
+                return this._regCloseKey(...args);
+            case 'RegDeleteKey':
+                return this._regDeleteKey(...args);
+            default:
+                throw new Error(`Unknown API call: ${apiName}`);
+        }
+    }
+
+    _createFile(filePath, accessMode, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile) {
+        try {
+            const fd = fs.openSync(filePath, accessMode);
+            console.log(`Creating file ${filePath}`);
+            return fd;
+        } catch (error) {
+            console.error(`Error creating file ${filePath}:`, error);
+            throw error;
+        }
+    }
+
+    _readFile(handle, buffer, numBytesToRead, numBytesRead, overlapped) {
+        try {
+            const bytesRead = fs.readSync(handle, buffer, 0, numBytesToRead, null);
+            console.log('Reading file');
+            return bytesRead;
+        } catch (error) {
+            console.error('Error reading file:', error);
+            throw error;
+        }
+    }
+
+    _writeFile(handle, buffer, numBytesToWrite, numBytesWritten, overlapped) {
+        try {
+            const bytesWritten = fs.writeSync(handle, buffer, 0, numBytesToWrite, null);
+            console.log('Writing file');
+            return bytesWritten;
+        } catch (error) {
+            console.error('Error writing file:', error);
+            throw error;
+        }
+    }
+
+    _closeHandle(handle) {
+        try {
+            fs.closeSync(handle);
+            console.log('Closing handle');
+        } catch (error) {
+            console.error('Error closing handle:', error);
+            throw error;
+        }
+    }
+
+    _deleteFile(filePath) {
+        try {
+            fs.unlinkSync(filePath);
+            console.log(`Deleting file ${filePath}`);
+        } catch (error) {
+            console.error(`Error deleting file ${filePath}:`, error);
+            throw error;
+        }
+    }
+
+    _moveFile(existingFilePath, newFilePath) {
+        try {
+            fs.renameSync(existingFilePath, newFilePath);
+            console.log(`Moving file from ${existingFilePath} to ${newFilePath}`);
+        } catch (error) {
+            console.error(`Error moving file from ${existingFilePath} to ${newFilePath}:`, error);
+            throw error;
+        }
+    }
+
+    _getFileAttributes(filePath) {
+        try {
+            const stats = fs.statSync(filePath);
+            console.log(`Getting file attributes for ${filePath}`);
+            return {
+                fileName: filePath,
+                size: stats.size,
+                creationTime: stats.birthtime,
+                lastAccessTime: stats.atime,
+                lastWriteTime: stats.mtime,
+                attributes: stats.mode
+            };
+        } catch (error) {
+            console.error(`Error getting file attributes for ${filePath}:`, error);
+            throw error;
+        }
+    }
+
+    _copyFile(srcFilePath, destFilePath, failIfExists) {
+        try {
+            if (failIfExists && fs.existsSync(destFilePath)) {
+                throw new Error(`Destination file ${destFilePath} already exists`);
+            }
+            fs.copyFileSync(srcFilePath, destFilePath);
+            console.log(`Copied file from ${srcFilePath} to ${destFilePath}`);
+        } catch (error) {
+            console.error(`Error copying file from ${srcFilePath} to ${destFilePath}:`, error);
+            throw error;
+        }
+    }
+
+    _moveFileEx(existingFilePath, newFilePath, flags) {
+        try {
+            if (flags & MOVEFILE_REPLACE_EXISTING) {
+                fs.renameSync(existingFilePath, newFilePath);
+                console.log(`Moved file from ${existingFilePath} to ${newFilePath} with replace existing flag`);
+            } else {
+                if (fs.existsSync(newFilePath)) {
+                    throw new Error(`Destination file ${newFilePath} already exists`);
+                }
+                fs.renameSync(existingFilePath, newFilePath);
+                console.log(`Moved file from ${existingFilePath} to ${newFilePath}`);
+            }
+        } catch (error) {
+            console.error(`Error moving file from ${existingFilePath} to ${newFilePath}:`, error);
+            throw error;
+        }
+    }
+
+    _regCreateKeyEx(hKey, subKey, reserved, lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition) {
+        try {
+            if (!this.registryManager.getValue(hKey, subKey)) {
+                this.registryManager.createKey(hKey + '\\' + subKey);
+                console.log(`Key "${hKey}\\${subKey}" created.`);
+            } else {
+                console.log(`Key "${hKey}\\${subKey}" already exists.`);
+            }
+        } catch (error) {
+            console.error(`Error creating registry key ${hKey}\\${subKey}:`, error);
+            throw error;
+        }
+    }
+
+    _regSetValueEx(hKey, lpValueName, reserved, dwType, lpData, cbData) {
+        try {
+            this.registryManager.setValue(hKey, lpValueName, lpData);
+            console.log(`Value "${lpValueName}" set for key "${hKey}".`);
+        } catch (error) {
+            console.error(`Error setting registry value ${lpValueName} for key ${hKey}:`, error);
+            throw error;
+        }
+    }
+
+    _regOpenKeyEx(hKey, subKey, ulOptions, samDesired, phkResult) {
+        try {
+            this.registryManager.openKey(hKey, subKey);
+            console.log(`Registry key ${hKey}\\${subKey} opened.`);
+        } catch (error) {
+            console.error(`Error opening registry key ${hKey}\\${subKey}:`, error);
+            throw error;
+        }
+    }
+
+    _regQueryValueEx(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData) {
+        try {
+            const value = this.registryManager.getValue(hKey, lpValueName);
+            console.log(`Registry value ${lpValueName} queried in key ${hKey}.`);
+            return value;
+        } catch (error) {
+            console.error(`Error querying registry value ${lpValueName} in key ${hKey}:`, error);
+            throw error;
+        }
+    }
+
+    _regCloseKey(hKey) {
+        try {
+            console.log(`Registry key ${hKey} closed.`);
+        } catch (error) {
+            console.error(`Error closing registry key ${hKey}:`, error);
+            throw error;
+        }
+    }
+
+    _regDeleteKey(hKey, subKey) {
+        try {
+            this.registryManager.deleteKey(`${hKey}\\${subKey}`);
+            console.log(`Key "${hKey}\\${subKey}" deleted.`);
+        } catch (error) {
+            console.error(`Error deleting registry key ${hKey}\\${subKey}:`, error);
+            throw error;
+        }
+    }
+}
+
+module.exports = Win32Subsystem;
+
+===================================================
+===================================================
+[d:\JSOS\tests\integration_test.js]
+
+// integration_test.js
+const Kernel = require('../kernel/kernel');
+const shell = require('../shell/shell');
+
+(async () => {
+    console.log("Starting integration test...");
+
+    // Initialize the kernel
+    const kernel = new Kernel();
+    kernel.initialize();
+
+    // Initialize the shell
+    const jsShell = new shell();
+    jsShell.initialize();
+
+    // Basic operations test
+    try {
+        // Create a process
+        const processId = kernel.processManager.createProcess(1, 'normal');
+        console.log(`Process created with ID: ${processId}`);
+
+        // Allocate memory
+        const memoryAddress = kernel.memoryManager.allocate(1024);
+        console.log(`Memory allocated at address: ${memoryAddress}`);
+
+        // Create a file
+        const filePath = './test_file.txt';
+        kernel.fileSystemManager.createFile(filePath, 'Hello, JSOS!');
+        console.log(`File created at path: ${filePath}`);
+
+        // Read the file
+        const fileContent = kernel.fileSystemManager.readFile(filePath);
+        console.log(`File content: ${fileContent}`);
+
+        // Delete the file
+        kernel.fileSystemManager.deleteFile(filePath);
+        console.log(`File deleted at path: ${filePath}`);
+
+        // Terminate the process
+        kernel.processManager.terminateProcess(processId);
+        console.log(`Process terminated with ID: ${processId}`);
+
+        console.log("Integration test completed successfully.");
+    } catch (error) {
+        console.error("Integration test failed:", error);
+    }
+})();
+
+===================================================
+===================================================
+[d:\JSOS\tests\interactive_shell_test.js]
+
+const Shell = require('../shell/shell');
+const EventManager = require('../events/event_manager');
+const FileSystemManager = require('../filesys/filesystem_manager');
+
+const eventManager = new EventManager();
+const fileSystemManager = new FileSystemManager(eventManager);
+
+const shell = new Shell(fileSystemManager);
+
+shell.initialize();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test.js]
+
+// test.js - NodeOS test module
+
+const wow64 = require('../wow64/wow64');
+const csrss = require('../subsys/csrss');
+const pnp = require('../pnp/pnp');
+const shell = require('../shell/shell');
+const loader = require('../loader/loader');
+const filesys = require('../filesys/filesys');
+const api = require('../api/api');
+const registry = require('../registry/registry');
+const network = require('../network/network');
+const services = require('../services/services');
+const graphics = require('../graphics/graphics');
+const ui = require('../ui/ui');
+const security = require('../security/security');
+const kernel = require('../kernel/kernel');
+
+function runTests() {
+    // Test WOW64 module
+    wow64.initializeWow64Info();
+    wow64.initializeWow64Loader({});
+    wow64.manageMemory();
+    wow64.translateSystemCalls("exampleCall");
+    wow64.switchContext();
+
+    // Test CSRSS
+    csrss.initializeCsrss();
+    csrss.manageIPC();
+    csrss.manageResources();
+
+    // Test PNP
+    pnp.initializePnp();
+    pnp.manageDevices();
+    pnp.allocateResources();
+
+    // Test Shell
+    shell.initializeShell();
+    shell.manageUI();
+    shell.handleCommands("exampleCommand");
+
+    // Test Loader
+    loader.loadExecutable("path/to/executable.exe");
+    loader.handlePEFormat({});
+    loader.allocateMemory({});
+
+    // Test File System
+    filesys.initializeFileSystem();
+    filesys.manageFiles();
+    filesys.ensureCompatibility();
+
+    // Test API
+    api.translateSystemCalls("exampleCall");
+    api.handleAPICalls("exampleAPI");
+
+    // Test Registry
+    registry.initializeRegistry();
+    registry.readRegistry("exampleKey");
+    registry.writeRegistry("exampleKey", "exampleValue");
+
+    // Test Network
+    network.initializeNetwork();
+    network.handleNetworkRequests("exampleRequest");
+
+    // Test Services
+    services.initializeServices();
+    services.startService("exampleService");
+    services.stopService("exampleService");
+
+    // Test Graphics
+    graphics.initializeGraphics();
+    graphics.drawOnScreen("exampleContent");
+
+    // Test UI
+    ui.initializeUI();
+    ui.handleUserInteraction("exampleEvent");
+
+    // Test Security
+    security.initializeSecurity();
+    security.authenticateUser("exampleUser", "examplePassword");
+    security.checkPermissions("exampleUser", "exampleResource");
+
+    // Test Kernel
+    kernel.initializeKernel();
+    kernel.manageProcesses();
+    kernel.handleScheduling();
+
+    console.log("All tests completed");
+}
+
+// Run the tests
+runTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_authentication_manager.js]
+
+const AuthenticationManager = require('../authentication/authentication_manager.js');
+const authManager = new AuthenticationManager();
+
+function runAuthenticationManagerTests() {
+    console.log("Running authentication manager tests...");
+    authManager.initialize();
+
+    // Add a new user
+    authManager._addUser('testuser', 'testpassword');
+    console.log("User 'testuser' added.");
+
+    // Authenticate user
+    try {
+        authManager.authenticate('testuser', 'testpassword');
+        console.log("Authentication successful for 'testuser'.");
+    } catch (error) {
+        console.error("Authentication failed for 'testuser':", error.message);
+    }
+
+    // Login user
+    try {
+        const sessionId = authManager.login('testuser', 'testpassword');
+        console.log(`User 'testuser' logged in with session ID: ${sessionId}`);
+
+        // Check authentication status
+        const isAuthenticated = authManager.isAuthenticated(sessionId);
+        console.log(`Is user authenticated? ${isAuthenticated}`);
+
+        // Get username from session ID
+        const username = authManager.getUsername(sessionId);
+        console.log(`Username for session ID ${sessionId}: ${username}`);
+
+        // Logout user
+        authManager.logout(sessionId);
+        console.log(`User 'testuser' logged out.`);
+    } catch (error) {
+        console.error("Login failed for 'testuser':", error.message);
+    }
+
+    // Change password
+    try {
+        authManager.changePassword('testuser', 'testpassword', 'newpassword');
+        console.log("Password changed for 'testuser'.");
+
+        // Authenticate with new password
+        authManager.authenticate('testuser', 'newpassword');
+        console.log("Authentication successful for 'testuser' with new password.");
+    } catch (error) {
+        console.error("Password change failed for 'testuser':", error.message);
+    }
+
+    // Delete user
+    try {
+        authManager.deleteUser('testuser');
+        console.log("User 'testuser' deleted.");
+
+        // Attempt to authenticate deleted user
+        authManager.authenticate('testuser', 'newpassword');
+    } catch (error) {
+        console.error("Authentication failed for deleted user 'testuser':", error.message);
+    }
+
+    console.log("Authentication manager tests completed.");
+}
+
+runAuthenticationManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_configuration_manager.js]
+
+const ConfigurationManager = require('../configuration/configuration_manager.js');
+const configManager = new ConfigurationManager();
+
+function runConfigurationManagerTests() {
+    console.log("Running configuration manager tests...");
+    configManager.initialize();
+
+    // Set configuration settings
+    configManager.setConfig('system.timeout', '30s');
+    configManager.setConfig('system.theme', 'dark');
+    configManager.setConfig('user.language', 'en-US');
+
+    // Get configuration settings
+    const timeout = configManager.getConfig('system.timeout');
+    console.log(`system.timeout: ${timeout}`);
+    const theme = configManager.getConfig('system.theme');
+    console.log(`system.theme: ${theme}`);
+    const language = configManager.getConfig('user.language');
+    console.log(`user.language: ${language}`);
+
+    // List all configuration settings
+    const configs = configManager.listConfigs();
+    console.log("Configuration settings:", configs);
+
+    // Delete a configuration setting
+    configManager.deleteConfig('system.theme');
+    console.log("Deleted configuration setting 'system.theme'.");
+
+    // Clear all configuration settings
+    configManager.clearConfigs();
+    console.log("Cleared all configuration settings.");
+
+    console.log("Configuration manager tests completed.");
+}
+
+runConfigurationManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_csrss.js]
+
+const CSRSS = require('../subsys/csrss.js');
+const csrss = new CSRSS();
+
+function runCsrssTests() {
+    console.log("Running CSRSS tests...");
+    csrss.initialize();
+
+    // Create a process
+    const processId = 1;
+    const processInfo = { name: 'Test Process', priority: 'normal' };
+    csrss.createProcess(processId, processInfo);
+
+    // Get process info
+    const info = csrss.getProcessInfo(processId);
+    console.log(`Process Info:`, info);
+
+    // Send a message to the process
+    csrss.sendMessage(processId, 'Hello, Process!');
+
+    // List all processes
+    const processes = csrss.listProcesses();
+    console.log("Processes:", processes);
+
+    // Terminate the process
+    csrss.terminateProcess(processId);
+
+    // Handle client requests
+    const newProcessId = csrss.handleClientRequest('createProcess', { processId: 2, processInfo: { name: 'Another Process', priority: 'high' } });
+    const processMessage = csrss.handleClientRequest('sendMessage', { processId: newProcessId, message: 'Hello, Another Process!' });
+    const processDetails = csrss.handleClientRequest('getProcessInfo', { processId: newProcessId });
+    console.log(`Process Details:`, processDetails);
+    csrss.handleClientRequest('terminateProcess', { processId: newProcessId });
+
+    console.log("CSRSS tests completed.");
+}
+
+runCsrssTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_device_manager.js]
+
+// test_device_manager.js
+
+const DeviceManager = require('../device/device_manager.js');
+
+// Initialize Device Manager
+const deviceManager = new DeviceManager();
+deviceManager.initialize();
+
+// Test Device Creation and Deletion
+const deviceId1 = deviceManager.createDevice('Keyboard', 'Input', { manufacturer: 'Logitech', model: 'K120' });
+console.log(`Device created with ID: ${deviceId1}`);
+
+const deviceId2 = deviceManager.createDevice('Mouse', 'Input', { manufacturer: 'Logitech', model: 'M185' });
+console.log(`Device created with ID: ${deviceId2}`);
+
+deviceManager.listDevices();
+
+deviceManager.deleteDevice(deviceId1);
+console.log(`Device with ID ${deviceId1} deleted`);
+
+deviceManager.listDevices();
+
+// Test Plug and Play Functionality
+deviceManager.plugDevice('device3', { name: 'Monitor', type: 'Display', characteristics: { manufacturer: 'Dell', model: 'U2419H' } });
+deviceManager.unplugDevice(deviceId2);
+
+deviceManager.listDevices();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_driver_manager.js]
+
+const DriverManager = require('../drivers/driver_manager.js');
+const driverManager = new DriverManager();
+
+function runDriverManagerTests() {
+    console.log("Running Driver Manager tests...");
+    driverManager.initialize();
+
+    // Load a driver
+    const driverId1 = driverManager.loadDriver('Test Driver', '/path/to/test_driver', { version: '1.0' });
+    console.log(`Driver loaded with ID ${driverId1}`);
+
+    // Get driver info
+    const driverInfo1 = driverManager.getDriverInfo(driverId1);
+    console.log(`Driver Info:`, driverInfo1);
+
+    // Load driver dependencies
+    driverManager.loadDriverDependencies(driverId1);
+
+    // Initialize the driver
+    driverManager.initializeDriver(driverId1);
+
+    // Unload the driver
+    driverManager.unloadDriver(driverId1);
+
+    // Load another driver
+    const driverId2 = driverManager.loadDriver('Another Driver', '/path/to/another_driver', { version: '2.0' });
+    console.log(`Driver loaded with ID ${driverId2}`);
+
+    // Get driver info
+    const driverInfo2 = driverManager.getDriverInfo(driverId2);
+    console.log(`Driver Info:`, driverInfo2);
+
+    // List all drivers
+    const drivers = driverManager.listDrivers();
+    console.log("Drivers:", drivers);
+
+    console.log("Driver Manager tests completed.");
+}
+
+runDriverManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_filesystem_manager.js]
+
+const fs = require('fs');
+const path = require('path');
+const FileSystemManager = require('../filesys/filesystem_manager');
+
+const fileSystemManager = new FileSystemManager();
+const testDir = path.join(__dirname, 'test_dir');
+const testFile = path.join(testDir, 'test_file.txt');
+
+function runFileSystemManagerTests() {
+    console.log("Running file system manager tests...");
+    fileSystemManager.initialize();
+
+    // Create a directory
+    fileSystemManager.createDirectory(testDir);
+
+    // Create a file
+    fileSystemManager.createFile(testFile, 'Hello, world!');
+
+    // Read the file
+    const content = fileSystemManager.readFile(testFile);
+    console.log(`Content of ${testFile}: ${content}`);
+
+    // Write to the file
+    fileSystemManager.writeFile(testFile, 'Updated content');
+    const updatedContent = fileSystemManager.readFile(testFile);
+    console.log(`Updated content of ${testFile}: ${updatedContent}`);
+
+    // List files in directory
+    const files = fileSystemManager.listFiles(testDir);
+    console.log(`Files in ${testDir}:`, files);
+
+    // Delete the file
+    fileSystemManager.deleteFile(testFile);
+    console.log(`Deleted ${testFile}`);
+
+    // Delete the directory
+    fileSystemManager.deleteDirectory(testDir);
+    console.log(`Deleted ${testDir}`);
+
+    console.log("File system manager tests completed.");
+}
+
+runFileSystemManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_graphics_manager.js]
+
+const GraphicsManager = require('../graphics/graphics_manager');
+const graphicsManager = new GraphicsManager();
+
+function runGraphicsManagerTests() {
+    console.log("Running graphics manager tests...");
+    graphicsManager.initialize();
+
+    // Create a window
+    const windowId = graphicsManager.createWindow('Test Window', 800, 600, { resizable: true });
+    console.log(`Window created with ID: ${windowId}`);
+
+    // Draw graphics
+    graphicsManager.drawGraphics(windowId, { description: 'Drawing some graphics...' });
+
+    // Handle user interaction
+    graphicsManager.handleUserInteraction(windowId, { type: 'click', x: 100, y: 150 });
+
+    // Get window info
+    const windowInfo = graphicsManager.getWindowInfo(windowId);
+    console.log(`Window Info: ${JSON.stringify(windowInfo, null, 2)}`);
+
+    // List windows
+    const windows = graphicsManager.listWindows();
+    console.log(`Windows: ${JSON.stringify(windows, null, 2)}`);
+
+    // Close the window
+    graphicsManager.closeWindow(windowId);
+    console.log(`Window ${windowId} closed`);
+
+    console.log("Graphics manager tests completed.");
+}
+
+runGraphicsManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_hardware_detection.js]
+
+const hardwareDetection = require('../kernel/hardware_detection');
+
+function runHardwareDetectionTests() {
+    console.log("Running hardware detection tests...");
+
+    try {
+        hardwareDetection.hardwareDetectionProcess();
+        console.log("Hardware detection and initialization completed successfully.");
+    } catch (error) {
+        console.error("Hardware detection process failed:", error.message);
+    }
+
+    console.log("Hardware detection tests completed.");
+}
+
+runHardwareDetectionTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_interrupt_manager.js]
+
+const InterruptManager = require('../kernel/interrupt_manager.js');
+const interruptManager = new InterruptManager();
+
+function runInterruptManagerTests() {
+    console.log("Running interrupt manager tests...");
+    interruptManager.initialize();
+
+    // Register a test interrupt handler
+    interruptManager.registerInterrupt('testInterrupt', (arg1, arg2) => {
+        console.log(`Test interrupt handled with args: ${arg1}, ${arg2}`);
+        return `Handled ${arg1} and ${arg2}`;
+    });
+
+    // Handle the test interrupt
+    try {
+        const result = interruptManager.handleInterrupt('testInterrupt', 'arg1', 'arg2');
+        console.log(`Interrupt handled result: ${result}`);
+    } catch (error) {
+        console.error("Interrupt test failed:", error.message);
+    }
+
+    console.log("Interrupt manager tests completed.");
+}
+
+runInterruptManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_io_manager.js]
+
+const IOManager = require('../io/io_manager');
+
+const ioManager = new IOManager();
+
+function runIOManagerTests() {
+    console.log("Running I/O manager tests...");
+    ioManager.initialize();
+
+    // Create a file
+    const fileHandle = ioManager.createFile('testfile.txt', 'w');
+
+    // Write to the file
+    const buffer = Buffer.from('Hello, world!');
+    ioManager.writeFile(fileHandle, buffer, 0, buffer.length, 0);
+
+    // Close the file
+    ioManager.closeFile(fileHandle);
+
+    // Reopen the file for reading
+    const readFileHandle = ioManager.createFile('testfile.txt', 'r');
+
+    // Read from the file
+    const readBuffer = Buffer.alloc(1024);
+    ioManager.readFile(readFileHandle, readBuffer, 0, buffer.length, 0);
+
+    // Close the file after reading
+    ioManager.closeFile(readFileHandle);
+
+    console.log("I/O manager tests completed.");
+}
+
+runIOManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_kernel.js]
+
+const Kernel = require('../kernel/kernel.js');
+const kernel = new Kernel();
+
+function runKernelTests() {
+    console.log("Running kernel tests...");
+    kernel.initialize();
+
+    // Run the kernel
+    kernel.run();
+
+    // Handle some system calls
+    console.log("Handling system calls...");
+
+    // Create a process
+    const processId = kernel.handleSystemCall('createProcess', [0, {}, null, false, null, null, null]);
+    console.log(`Process created with ID ${processId}`);
+
+    // Allocate memory for the process
+    const memoryAddress = kernel.handleSystemCall('allocateVirtualMemory', [processId, null, 0, 1024, 0, 0]);
+    console.log(`Memory allocated at address ${memoryAddress} for process ${processId}`);
+
+    // Create a file
+    const fileHandle = kernel.handleSystemCall('createFile', ['testfile.txt', 'w']);
+    console.log(`File created with handle ${fileHandle}`);
+
+    // Write to the file
+    kernel.handleSystemCall('writeFile', [fileHandle, Buffer.from('Hello, world!'), 0, 'Hello, world!'.length, 0]);
+
+    // Close the file after writing
+    kernel.handleSystemCall('closeFile', [fileHandle]);
+
+    // Reopen the file for reading
+    const readFileHandle = kernel.handleSystemCall('createFile', ['testfile.txt', 'r']);
+    console.log(`File opened for reading with handle ${readFileHandle}`);
+
+    // Read from the file
+    const buffer = Buffer.alloc(1024);
+    const bytesRead = kernel.handleSystemCall('readFile', [readFileHandle, buffer, 0, 'Hello, world!'.length, 0]);
+    console.log(`Read ${bytesRead} bytes: ${buffer.toString('utf8', 0, bytesRead)}`);
+
+    // Close the file after reading
+    kernel.handleSystemCall('closeFile', [readFileHandle]);
+
+    // Terminate the process
+    kernel.handleSystemCall('terminateProcess', [processId]);
+
+    console.log("Kernel tests completed.");
+}
+
+runKernelTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_logging_manager.js]
+
+const LoggingManager = require('../logging/logging_manager.js');
+const loggingManager = new LoggingManager();
+
+function runLoggingManagerTests() {
+    console.log("Running logging manager tests...");
+    loggingManager.initialize();
+
+    // Log different levels of messages
+    loggingManager.info("This is an informational message.");
+    loggingManager.warn("This is a warning message.");
+    loggingManager.error("This is an error message.");
+    loggingManager.debug("This is a debug message.");
+
+    // Retrieve and display logs
+    const logs = loggingManager.getLogs();
+    console.log("Logs:");
+    console.log(logs);
+
+    // Clear logs
+    loggingManager.clearLogs();
+    console.log("Logs after clearing:");
+    console.log(loggingManager.getLogs());
+
+    console.log("Logging manager tests completed.");
+}
+
+runLoggingManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_main_boot.js]
+
+const mainBoot = require('../kernel/main_boot');
+
+function runMainBootTests() {
+    console.log("Running main boot tests...");
+
+    try {
+        mainBoot.mainBootProcess();
+        console.log("Main boot process completed successfully.");
+    } catch (error) {
+        console.error("Main boot process failed:", error.message);
+    }
+
+    console.log("Main boot tests completed.");
+}
+
+runMainBootTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_mbr_boot.js]
+
+const assert = require('assert');
+const mbrBoot = require('../kernel/mbr_boot');
+
+function runTests() {
+    console.log("Running MBR Boot Tests...");
+
+    try {
+        // Test: should initialize MBR successfully
+        const result = mbrBoot.initializeMBR();
+        assert.strictEqual(result, true, 'MBR should initialize successfully');
+        console.log("Test passed: MBR should initialize successfully");
+
+        // Add more tests as needed
+    } catch (error) {
+        console.error("Test failed:", error.message);
+    }
+}
+
+runTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_memory.js]
+
+const MemoryManager = require('../memory/memory_manager.js');
+const memoryManager = new MemoryManager();
+
+function runMemoryTests() {
+    console.log("Running memory tests...");
+    memoryManager.initialize();
+    const address = memoryManager.allocateVirtualMemory(1, null, 0, 1024, 0, 0);
+    console.log(`Memory allocated at address ${address}`);
+    memoryManager.freeVirtualMemory(1, address, 1024, 0);
+    console.log("Memory tests completed.");
+}
+
+runMemoryTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_memory_manager.js]
+
+// test_memory_manager.js
+
+const MemoryManager = require('../memory/memory_manager.js');
+
+// Initialize Memory Manager
+const memoryManager = new MemoryManager();
+memoryManager.initialize();
+
+// Test Memory Allocation and Deallocation
+const processId = 1;
+const allocationSize = 1024 * 1024; // 1 MB
+const baseAddress = memoryManager.allocateVirtualMemory(processId, 0, 0, allocationSize, 'private', 'rw');
+console.log(`Allocated virtual memory at address ${baseAddress}`);
+
+memoryManager.freeVirtualMemory(processId, baseAddress, allocationSize, 'release');
+console.log(`Freed virtual memory at address ${baseAddress}`);
+
+// Test Paging
+const pageAddress = memoryManager.allocatePage();
+memoryManager.mapVirtualToPhysical(0x1000, pageAddress);
+const physicalAddress = memoryManager.getPhysicalAddress(0x1000);
+console.log(`Physical address for virtual address 0x1000: ${physicalAddress}`);
+
+// Test Memory Protection
+memoryManager.protectMemory(baseAddress, allocationSize);
+
+// Test Memory Usage
+const memoryUsage = memoryManager.getMemoryUsage();
+console.log(`Memory Usage: Total: ${memoryUsage.totalMemory}, Free: ${memoryUsage.freeMemory}, Used: ${memoryUsage.usedMemory}`);
+
+// Test Process Memory Info
+const processMemoryInfo = memoryManager.getProcessMemoryInfo(processId);
+console.log(`Process Memory Info for Process ${processId}: ${JSON.stringify(processMemoryInfo)}`);
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_network_manager.js]
+
+const NetworkManager = require('../network/network_manager.js');
+const networkManager = new NetworkManager();
+
+function runNetworkManagerTests() {
+    console.log("Running network manager tests...");
+    networkManager.initialize();
+
+    // List network interfaces
+    const interfaces = networkManager.listInterfaces();
+    console.log("Network interfaces:", interfaces);
+
+    // Get interface info
+    const interfaceInfo = networkManager.getInterfaceInfo(interfaces[0]);
+    console.log(`Interface info for ${interfaces[0]}:`, interfaceInfo);
+
+    // Create a network connection
+    const connectionId = networkManager.createConnection('example.com', 80);
+    console.log(`Connection created with ID: ${connectionId}`);
+
+    // List all connections
+    const connections = networkManager.listConnections();
+    console.log("Connections:", connections);
+
+    // Send data over the connection (for example purposes, actual server interaction may vary)
+    setTimeout(() => {
+        networkManager.sendData(connectionId, 'GET / HTTP/1.1\r\nHost: example.com\r\n\r\n');
+    }, 2000);
+
+    // Close the connection after some time
+    setTimeout(() => {
+        networkManager.closeConnection(connectionId);
+    }, 5000);
+
+    console.log("Network manager tests completed.");
+}
+
+runNetworkManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_ntfs_boot.js]
+
+const assert = require('assert');
+const ntfsBoot = require('../kernel/ntfs_boot');
+
+function runTests() {
+    console.log("Running NTFS Boot Tests...");
+
+    try {
+        // Test: should load NTLDR successfully
+        const result = ntfsBoot.loadNTLDR();
+        assert.strictEqual(result, true, 'NTLDR should load successfully');
+        console.log("Test passed: NTLDR should load successfully");
+
+        // Add more tests as needed
+    } catch (error) {
+        console.error("Test failed:", error.message);
+    }
+}
+
+runTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_osloader.js]
+
+const assert = require('assert');
+const osloader = require('../kernel/osloader');
+
+function runTests() {
+    console.log("Running OS Loader Tests...");
+
+    try {
+        // Test: should load the OS successfully
+        const argv = []; // Add necessary arguments
+        const result = osloader.loadOS(argv);
+        assert.strictEqual(result, true, 'OS should load successfully');
+        console.log("Test passed: OS should load successfully");
+
+        // Add more tests as needed
+    } catch (error) {
+        console.error("Test failed:", error.message);
+    }
+}
+
+runTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_pnp_manager.js]
+
+const PnPManager = require('../pnp/pnp_manager.js');
+const pnpManager = new PnPManager();
+
+function runPnPManagerTests() {
+    console.log("Running PnP manager tests...");
+    pnpManager.initialize();
+
+    // Add a device
+    const deviceInfo = { name: 'Test Device', type: 'USB', vendor: 'TestVendor' };
+    const deviceId = pnpManager.addDevice(deviceInfo);
+    console.log(`Device added with ID ${deviceId}`);
+
+    // Get device info
+    const info = pnpManager.getDeviceInfo(deviceId);
+    console.log(`Device Info:`, info);
+
+    // Handle device requests
+    const readResult = pnpManager.handleDeviceRequest(deviceId, 'read', { buffer: Buffer.alloc(1024) });
+    console.log(`Read Result: ${readResult}`);
+
+    const writeResult = pnpManager.handleDeviceRequest(deviceId, 'write', { buffer: Buffer.from('Hello Device!') });
+    console.log(`Write Result: ${writeResult}`);
+
+    const controlResult = pnpManager.handleDeviceRequest(deviceId, 'control', { command: 'reset' });
+    console.log(`Control Result: ${controlResult}`);
+
+    // List all devices
+    const devices = pnpManager.listDevices();
+    console.log("Devices:", devices);
+
+    // Remove the device
+    pnpManager.removeDevice(deviceId);
+    console.log(`Device with ID ${deviceId} removed`);
+
+    console.log("PnP manager tests completed.");
+}
+
+runPnPManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_process_manager.js]
+
+const ProcessManager = require('../kernel/process_manager');
+
+const processManager = new ProcessManager();
+
+function runProcessManagerTests() {
+    console.log("Running process manager tests...");
+    processManager.initialize();
+
+    // Create a parent process
+    const parentProcessId = processManager.createProcess(1, 5);
+
+    // Create a child process
+    const childProcessId = processManager.createProcess(2, 3);
+
+    // Simulate IPC
+    processManager.sendMessage(parentProcessId, 'Hello from parent');
+    processManager.sendMessage(childProcessId, 'Hello from child');
+
+    // Terminate the child process
+    processManager.terminateProcess(childProcessId);
+
+    // Terminate the parent process
+    processManager.terminateProcess(parentProcessId);
+
+    console.log("Process manager tests completed.");
+}
+
+runProcessManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_registry_manager.js]
+
+const RegistryManager = require('../registry/registry_manager.js');
+const registryManager = new RegistryManager();
+
+function runRegistryManagerTests() {
+    console.log("Running registry manager tests...");
+    registryManager.initialize();
+
+    // Create a key
+    try {
+        registryManager.createKey('HKEY_LOCAL_MACHINE', 'Software\\Test');
+        console.log('Registry key created.');
+    } catch (error) {
+        console.error('Error creating registry key:', error);
+    }
+
+    // Set values
+    try {
+        registryManager.setValue('HKEY_LOCAL_MACHINE', 'Software\\Test', 'Version', '1.0.0');
+        registryManager.setValue('HKEY_LOCAL_MACHINE', 'Software\\Test', 'Author', 'NodeOS Developer');
+        console.log('Registry values set.');
+    } catch (error) {
+        console.error('Error setting registry values:', error);
+    }
+
+    // Get values
+    try {
+        const version = registryManager.getValue('HKEY_LOCAL_MACHINE', 'Software\\Test', 'Version');
+        console.log(`Version: ${version}`);
+        const author = registryManager.getValue('HKEY_LOCAL_MACHINE', 'Software\\Test', 'Author');
+        console.log(`Author: ${author}`);
+    } catch (error) {
+        console.error('Error getting registry values:', error);
+    }
+
+    // List keys
+    try {
+        const keys = registryManager.listKeys('HKEY_LOCAL_MACHINE');
+        console.log("Keys:", keys);
+    } catch (error) {
+        console.error('Error listing registry keys:', error);
+    }
+
+    // List values
+    try {
+        const values = registryManager.listValues('HKEY_LOCAL_MACHINE', 'Software\\Test');
+        console.log("Values for HKEY_LOCAL_MACHINE\\Software\\Test:", values);
+    } catch (error) {
+        console.error('Error listing registry values:', error);
+    }
+
+    // Delete a value
+    try {
+        registryManager.deleteValue('HKEY_LOCAL_MACHINE', 'Software\\Test', 'Author');
+        console.log("Deleted value 'Author'.");
+    } catch (error) {
+        console.error('Error deleting registry value:', error);
+    }
+
+    // Delete a key
+    try {
+        registryManager.deleteKey('HKEY_LOCAL_MACHINE', 'Software\\Test');
+        console.log("Deleted key 'HKEY_LOCAL_MACHINE\\Software\\Test'.");
+    } catch (error) {
+        console.error('Error deleting registry key:', error);
+    }
+
+    console.log("Registry manager tests completed.");
+}
+
+runRegistryManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_security_manager.js]
+
+const SecurityManager = require('../security/security_manager.js');
+const securityManager = new SecurityManager();
+
+function runSecurityManagerTests() {
+    console.log("Running Security Manager tests...");
+    securityManager.initialize();
+
+    // Add users
+    securityManager.addUser('adminUser', 'adminPass', 'admin');
+    securityManager.addUser('normalUser', 'userPass', 'user');
+
+    // Authenticate users
+    try {
+        securityManager.authenticate('adminUser', 'adminPass');
+        console.log("Admin user authenticated successfully.");
+    } catch (error) {
+        console.error(`Error authenticating admin user: ${error.message}`);
+    }
+
+    try {
+        securityManager.authenticate('normalUser', 'userPass');
+        console.log("Normal user authenticated successfully.");
+    } catch (error) {
+        console.error(`Error authenticating normal user: ${error.message}`);
+    }
+
+    // Check permissions
+    try {
+        securityManager.checkPermission('adminUser', 'resource1', 'delete');
+        console.log("Admin user has delete permission for resource1.");
+    } catch (error) {
+        console.error(`Error checking permission for admin user: ${error.message}`);
+    }
+
+    try {
+        securityManager.checkPermission('normalUser', 'resource1', 'write');
+        console.log("Normal user has write permission for resource1.");
+    } catch (error) {
+        console.error(`Error checking permission for normal user: ${error.message}`);
+    }
+
+    // Secure IPC
+    securityManager.secureIPC('adminUser', 'normalUser', 'Hello, secure world!');
+
+    console.log("Security Manager tests completed.");
+}
+
+runSecurityManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_service_manager.js]
+
+const ServiceManager = require('../services/service_manager.js');
+const serviceManager = new ServiceManager();
+
+function runServiceManagerTests() {
+    console.log("Running service manager tests...");
+    serviceManager.initialize();
+
+    // Add a service
+    const serviceName = 'TestService';
+    const serviceExecutable = '/path/to/test_service';
+    const serviceId = serviceManager.addService(serviceName, serviceExecutable, { autoStart: true });
+    console.log(`Service added with ID ${serviceId}`);
+
+    // Start the service
+    serviceManager.startService(serviceName);
+
+    // Get service info
+    const info = serviceManager.getServiceInfo(serviceName);
+    console.log(`Service Info:`, info);
+
+    // List all services
+    const services = serviceManager.listServices();
+    console.log("Services:", services);
+
+    // Stop the service
+    serviceManager.stopService(serviceName);
+
+    // Remove the service
+    serviceManager.removeService(serviceName);
+    console.log(`Service ${serviceName} removed`);
+
+    console.log("Service manager tests completed.");
+}
+
+runServiceManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_shell.js]
+
+const Kernel = require('../kernel/kernel.js');
+const kernel = new Kernel();
+
+function runShellTests() {
+    console.log("Running shell tests...");
+    kernel.initialize();
+
+    // Simulate shell operations
+    console.log("JSOS> Shell initialized.");
+
+    // Create a process
+    const processId = kernel.handleSystemCall('createProcess', [0, {}, null, false, null, null, null]);
+    console.log(`Process created with ID ${processId}`);
+
+    // Allocate memory for the process
+    try {
+        const memoryAddress = kernel.handleSystemCall('allocateMemory', [processId, null, 0, 1024, 0, 0]);
+        console.log(`Memory allocated at address ${memoryAddress} for process ${processId}`);
+    } catch (error) {
+        console.error(`Memory allocation failed: ${error.message}`);
+    }
+
+    // List processes
+    const processes = kernel.processManager.listProcesses();
+    console.log(`List of processes:`);
+    processes.forEach(p => console.log(`Process ID: ${p.pid}, Info: ${JSON.stringify(p)}`));
+
+    console.log("Shell tests completed.");
+}
+
+runShellTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_shell_commands.js]
+
+const Shell = require('../shell/shell');
+const shell = new Shell();
+
+shell.initialize();
+
+console.log('Testing DIR command');
+shell._handleInput('DIR');
+
+console.log('Testing MKDIR command');
+shell._handleInput('MKDIR test_dir');
+
+console.log('Testing COPY command');
+shell._handleInput('COPY test_shell_commands.js test_dir/test_copy.js');
+
+console.log('Testing DEL command');
+shell._handleInput('DEL test_dir/test_copy.js');
+
+console.log('Testing RMDIR command');
+shell._handleInput('RMDIR test_dir');
+
+console.log('Testing PAUSE command');
+shell._handleInput('PAUSE');
+
+console.log('Testing CLS command');
+shell._handleInput('CLS');
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_smss.js]
+
+const SMSS = require('../subsys/smss.js');
+const smss = new SMSS();
+
+function runSmssTests() {
+    console.log("Running SMSS tests...");
+    smss.initialize();
+
+    // Create a session
+    const sessionInfo = { user: 'Test User', terminal: 'tty1' };
+    const sessionId = smss.createSession(sessionInfo);
+
+    // Get session info
+    const info = smss.getSessionInfo(sessionId);
+    console.log(`Session Info:`, info);
+
+    // List all sessions
+    const sessions = smss.listSessions();
+    console.log("Sessions:", sessions);
+
+    // Terminate the session
+    smss.terminateSession(sessionId);
+
+    // Handle client requests
+    const newSessionId = smss.handleClientRequest('createSession', { sessionInfo: { user: 'Another User', terminal: 'tty2' } });
+    const sessionDetails = smss.handleClientRequest('getSessionInfo', { sessionId: newSessionId });
+    console.log(`Session Details:`, sessionDetails);
+    smss.handleClientRequest('terminateSession', { sessionId: newSessionId });
+
+    console.log("SMSS tests completed.");
+}
+
+runSmssTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_subsys_manager.js]
+
+const SubsystemManager = require('../subsys/subsys_manager.js');
+const subsystemManager = new SubsystemManager();
+
+function runSubsystemManagerTests() {
+    console.log("Running subsystem manager tests...");
+    subsystemManager.initialize();
+
+    // List subsystems
+    const subsystems = subsystemManager.listSubsystems();
+    console.log("Subsystems:", subsystems);
+
+    // Test CSRSS subsystem
+    const processId = 1;
+    const processInfo = { name: 'Test Process', priority: 'normal' };
+    subsystemManager.sendSubsystemRequest('CSRSS', 'createProcess', { processId, processInfo });
+    const csrss = subsystemManager.getSubsystem('CSRSS');
+    const info = csrss.getProcessInfo(processId);
+    console.log(`Process Info from CSRSS:`, info);
+    subsystemManager.sendSubsystemRequest('CSRSS', 'sendMessage', { processId, message: 'Hello, Process!' });
+    subsystemManager.sendSubsystemRequest('CSRSS', 'terminateProcess', { processId });
+
+    // Test SMSS subsystem
+    const sessionId = subsystemManager.sendSubsystemRequest('SMSS', 'createSession', { sessionInfo: { user: 'testUser' } });
+    const smss = subsystemManager.getSubsystem('SMSS');
+    const sessionInfo = smss.getSessionInfo(sessionId);
+    console.log(`Session Info from SMSS:`, sessionInfo);
+    subsystemManager.sendSubsystemRequest('SMSS', 'terminateSession', { sessionId });
+
+    console.log("Subsystem manager tests completed.");
+}
+
+runSubsystemManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_syscall_manager.js]
+
+const Kernel = require('../kernel/kernel');
+
+function runSyscallManagerTests() {
+    console.log("Running syscall manager tests...");
+    const kernel = new Kernel();
+    kernel.initialize();
+
+    try {
+        // Example syscall tests
+        kernel.handleSystemCall('createDirectory', ['test_dir']);
+        console.log('createDirectory syscall passed.');
+
+        kernel.handleSystemCall('deleteDirectory', ['test_dir']);
+        console.log('deleteDirectory syscall passed.');
+
+        kernel.handleSystemCall('allocateMemory', [1, null, 0, 1024, 0, 0]);
+        console.log('allocateMemory syscall passed.');
+
+        // Add more syscall tests as needed
+    } catch (error) {
+        console.error(`Syscall test failed: ${error.message}`);
+    }
+
+    console.log("Syscall manager tests completed.");
+}
+
+runSyscallManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_ui_manager.js]
+
+const UIManager = require('../ui/ui_manager.js');
+const uiManager = new UIManager();
+
+function runUIManagerTests() {
+    console.log("Running UI manager tests...");
+    uiManager.initialize();
+
+    // Create a window
+    const windowId = uiManager.createWindow('Test Window', 800, 600, { resizable: true });
+
+    // Get window info
+    const windowInfo = uiManager.getWindowInfo(windowId);
+    console.log(`Window Info:`, windowInfo);
+
+    // Draw graphics in the window
+    uiManager.drawGraphics(windowId, 'Drawing some graphics...');
+
+    // Handle user interaction
+    uiManager.handleUserInteraction(windowId, 'User clicked a button');
+
+    // List all windows
+    const windows = uiManager.listWindows();
+    console.log("Windows:", windows);
+
+    // Close the window
+    uiManager.closeWindow(windowId);
+
+    // Test event listeners
+    uiManager.on('graphicsDrawn', (id, graphics) => {
+        console.log(`Graphics drawn in window ${id}: ${graphics}`);
+    });
+
+    uiManager.on('userInteraction', (id, event) => {
+        console.log(`User interaction in window ${id}: ${event}`);
+    });
+
+    // Test event handling
+    const newWindowId = uiManager.createWindow('Another Test Window', 1024, 768, { resizable: false });
+    uiManager.drawGraphics(newWindowId, 'Drawing more graphics...');
+    uiManager.handleUserInteraction(newWindowId, 'User moved a slider');
+
+    console.log("UI manager tests completed.");
+}
+
+runUIManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_user_manager.js]
+
+const UserManager = require('../security/user_manager.js');
+const userManager = new UserManager();
+
+function runUserManagerTests() {
+    console.log("Running user manager tests...");
+    userManager.initialize();
+
+    // Add a new user
+    userManager.addUser('testuser', 'testpassword', ['user']);
+    console.log("User 'testuser' added.");
+
+    // Authenticate user
+    try {
+        userManager.authenticate('testuser', 'testpassword');
+        console.log("Authentication successful for 'testuser'.");
+    } catch (error) {
+        console.error("Authentication failed for 'testuser':", error.message);
+    }
+
+    // Change user password
+    try {
+        userManager.changePassword('testuser', 'testpassword', 'newpassword');
+        console.log("Password changed for 'testuser'.");
+        userManager.authenticate('testuser', 'newpassword');
+        console.log("Authentication successful for 'testuser' with new password.");
+    } catch (error) {
+        console.error("Password change failed for 'testuser':", error.message);
+    }
+
+    // Add a new group
+    userManager.addGroup('testgroup', ['testuser']);
+    console.log("Group 'testgroup' added with member 'testuser'.");
+
+    // Add user to group
+    userManager.addUserToGroup('testuser2', 'testgroup');
+    console.log("User 'testuser2' added to group 'testgroup'.");
+
+    // List all users
+    const users = userManager.listUsers();
+    console.log("Users:", users);
+
+    // List all groups
+    const groups = userManager.listGroups();
+    console.log("Groups:", groups);
+
+    // Get user info
+    const userInfo = userManager.getUserInfo('testuser');
+    console.log("User Info:", userInfo);
+
+    // Get group info
+    const groupInfo = userManager.getGroupInfo('testgroup');
+    console.log("Group Info:", groupInfo);
+
+    // Remove user from group
+    userManager.removeUserFromGroup('testuser2', 'testgroup');
+    console.log("User 'testuser2' removed from group 'testgroup'.");
+
+    // Remove user
+    userManager.removeUser('testuser');
+    console.log("User 'testuser' removed.");
+
+    // Remove group
+    userManager.removeGroup('testgroup');
+    console.log("Group 'testgroup' removed.");
+
+    console.log("User manager tests completed.");
+}
+
+runUserManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_win32_subsystem.js]
+
+// test_win32_subsystem.js
+const Win32Subsystem = require('../subsys/win32_subsystem');
+
+function runWin32SubsystemTests() {
+    const win32Subsystem = new Win32Subsystem();
+    win32Subsystem.initialize();
+
+    const processId = 1;
+    const processInfo = { name: 'Win32 Process', priority: 'normal' };
+    win32Subsystem.createProcess(processId, processInfo);
+
+    console.log('Process Info:', win32Subsystem.getProcessInfo(processId));
+
+    win32Subsystem.sendMessage(processId, 'Hello, Win32 Process!');
+
+    const filePath = 'D:\\jsos\\tests\\test.txt';
+    const newFilePath = 'D:\\jsos\\tests\\new_test.txt';
+    const writeBuffer = Buffer.from('Hello, Win32!');
+
+    let fileHandle;
+
+    // Stage: Setup initial state
+    function cleanupFile(path) {
+        try {
+            win32Subsystem.handleApiCall('DeleteFile', [path]);
+        } catch (e) {
+            if (e.code === 'ENOENT') {
+                console.log(`File not found: ${path}, cannot delete.`);
+            } else {
+                console.error(`Error deleting file ${path}:`, e);
+            }
+        }
+    }
+
+    function cleanupRegistryKey(hKey, subKey) {
+        try {
+            win32Subsystem.handleApiCall('RegDeleteKey', [hKey, subKey]);
+        } catch (e) {
+            if (e.message.includes('not found')) {
+                console.log(`Registry key not found: ${hKey}\\${subKey}, cannot delete.`);
+            } else {
+                console.error(`Error deleting registry key ${hKey}\\${subKey}:`, e);
+            }
+        }
+    }
+
+    cleanupFile(filePath);
+    cleanupFile(newFilePath);
+    cleanupRegistryKey('HKEY_LOCAL_MACHINE', 'Software\\Test');
+
+    // Test file operations
+    try {
+        fileHandle = win32Subsystem.handleApiCall('CreateFile', [filePath, 'w', 'rw', null, 'open', 'normal', null]);
+        win32Subsystem.handleApiCall('WriteFile', [fileHandle, writeBuffer, writeBuffer.length, null, null]);
+        win32Subsystem.handleApiCall('CloseHandle', [fileHandle]);
+
+        fileHandle = win32Subsystem.handleApiCall('CreateFile', [filePath, 'r', 'rw', null, 'open', 'normal', null]);
+        const readBuffer = Buffer.alloc(writeBuffer.length);
+        win32Subsystem.handleApiCall('ReadFile', [fileHandle, readBuffer, readBuffer.length, null, null]);
+        console.log('Read result:', readBuffer.toString('utf8', 0, writeBuffer.length));
+        win32Subsystem.handleApiCall('CloseHandle', [fileHandle]);
+
+        win32Subsystem.handleApiCall('MoveFile', [filePath, newFilePath]);
+        console.log('Move result: Moved file from', filePath, 'to', newFilePath);
+
+        const fileAttributes = win32Subsystem.handleApiCall('GetFileAttributes', [newFilePath]);
+        console.log('File Attributes:', fileAttributes);
+
+        win32Subsystem.handleApiCall('DeleteFile', [newFilePath]);
+        console.log('Delete result: Deleted file', newFilePath);
+    } catch (error) {
+        console.error('Error during file operations:', error);
+    }
+
+    // Test registry operations
+    try {
+        // First ensure the key doesn't exist
+        cleanupRegistryKey('HKEY_LOCAL_MACHINE', 'Software\\Test');
+
+        // Create, modify, query, and delete registry key
+        win32Subsystem.handleApiCall('RegCreateKeyEx', ['HKEY_LOCAL_MACHINE', 'Software\\Test', 0, null, 0, 'KEY_WRITE', null, null]);
+        console.log('Registry key created.');
+
+        win32Subsystem.handleApiCall('RegSetValueEx', ['HKEY_LOCAL_MACHINE\\Software\\Test', 'TestValue', 0, 'REG_SZ', 'TestData', 'TestData'.length]);
+        console.log('Registry value set.');
+
+        const value = win32Subsystem.handleApiCall('RegQueryValueEx', ['HKEY_LOCAL_MACHINE\\Software\\Test', 'TestValue', null, null, null, null]);
+        console.log('Registry Value:', value);
+
+        win32Subsystem.handleApiCall('RegCloseKey', ['HKEY_LOCAL_MACHINE\\Software\\Test']);
+        console.log('Registry key closed.');
+
+        win32Subsystem.handleApiCall('RegDeleteKey', ['HKEY_LOCAL_MACHINE', 'Software\\Test']);
+        console.log('Registry key deleted.');
+    } catch (error) {
+        console.error('Error during registry operations:', error);
+    }
+
+    win32Subsystem.terminateProcess(processId);
+    console.log('Process', processId, 'terminated.');
+}
+
+runWin32SubsystemTests();
+
+===================================================
+===================================================
+[d:\JSOS\tests\test_wow64_manager.js]
+
+const Wow64Manager = require('../wow64/wow64.js');
+const wow64Manager = new Wow64Manager();
+
+function runWow64ManagerTests() {
+    console.log("Running Wow64 Manager tests...");
+    wow64Manager.initialize();
+
+    // Create a 32-bit process
+    const processId = wow64Manager.create32BitProcess('C:\\Program Files (x86)\\TestApp\\testapp.exe', ['--arg1', '--arg2']);
+    console.log(`32-bit process created with ID ${processId}`);
+
+    // Allocate memory for the 32-bit process
+    const memoryAddress = wow64Manager.handle32BitSystemCall(processId, 'allocateMemory', [1024]);
+    console.log(`Memory allocated at address ${memoryAddress} for process ${processId}`);
+
+    // Read from a file
+    const readResult = wow64Manager.handle32BitSystemCall(processId, 'readFile', [1, Buffer.alloc(1024), 0, 100]);
+    console.log(`Read result: ${readResult}`);
+
+    // Write to a file
+    const writeResult = wow64Manager.handle32BitSystemCall(processId, 'writeFile', [1, Buffer.from('Hello, world!'), 0, 13]);
+    console.log(`Write result: ${writeResult}`);
+
+    // Free memory
+    wow64Manager.handle32BitSystemCall(processId, 'freeMemory', [memoryAddress, 1024]);
+    console.log(`Memory at address ${memoryAddress} for process ${processId} freed`);
+
+    // Create a thread
+    const threadId = wow64Manager.handle32BitSystemCall(processId, 'createThread', [memoryAddress, null]);
+    console.log(`Thread created with ID ${threadId} in process ${processId}`);
+
+    // Terminate the thread
+    wow64Manager.handle32BitSystemCall(processId, 'terminateThread', [threadId]);
+    console.log(`Thread with ID ${threadId} in process ${processId} terminated`);
+
+    // List all 32-bit processes
+    const processes = wow64Manager.list32BitProcesses();
+    console.log("32-bit processes:", processes);
+
+    // Terminate the 32-bit process
+    wow64Manager.terminate32BitProcess(processId);
+    console.log(`32-bit process ${processId} terminated`);
+
+    console.log("Wow64 Manager tests completed.");
+}
+
+runWow64ManagerTests();
+
+===================================================
+===================================================
+[d:\JSOS\ui\ui.js]
+
+// ui.js - NodeOS UI module in JavaScript
+
+// Function to initialize the UI
+function initializeUI() {
+    console.log("UI initialized");
+    // Implement UI initialization logic
+}
+
+// Function to handle user interactions
+function handleUserInteraction(event) {
+    console.log("Handling user interaction:", event);
+    // Implement interaction handling logic
+}
+
+module.exports = {
+    initializeUI,
+    handleUserInteraction
+};
+
+===================================================
+===================================================
+[d:\JSOS\ui\ui_manager.js]
+
+const EventEmitter = require('events');
+
+class UIManager extends EventEmitter {
+    constructor() {
+        super();
+        this.windows = new Map(); // Maps windowId to window information
+        this.nextWindowId = 1;
+    }
+
+    initialize() {
+        console.log("Initializing UI Manager...");
+        this._setupUI();
+        console.log("UI Manager initialized.");
+    }
+
+    _setupUI() {
+        console.log("Setting up UI components...");
+        // Simulate setting up UI components
+    }
+
+    createWindow(title, width, height, options) {
+        const windowId = this.nextWindowId++;
+        console.log(`Creating window ${windowId} with title: ${title}`);
+
+        const windowInfo = {
+            id: windowId,
+            title,
+            width,
+            height,
+            options,
+            content: '',
+            status: 'created'
+        };
+
+        this.windows.set(windowId, windowInfo);
+        console.log(`Window ${windowId} created with title: ${title}`);
+        return windowId;
+    }
+
+    closeWindow(windowId) {
+        console.log(`Closing window ${windowId}`);
+        const window = this.windows.get(windowId);
+        if (!window) {
+            throw new Error(`Window with ID ${windowId} not found`);
+        }
+        window.status = 'closed';
+        this.windows.delete(windowId);
+        console.log(`Window ${windowId} closed`);
+    }
+
+    drawGraphics(windowId, graphicsData) {
+        console.log(`Drawing graphics in window ${windowId}: ${graphicsData}`);
+        const window = this.windows.get(windowId);
+        if (!window) {
+            throw new Error(`Window with ID ${windowId} not found`);
+        }
+        // Simulate drawing graphics in the window
+        window.content += graphicsData;
+        this.emit('graphicsDrawn', windowId, graphicsData);
+    }
+
+    handleUserInteraction(windowId, event) {
+        console.log(`Handling user interaction in window ${windowId}: ${event}`);
+        const window = this.windows.get(windowId);
+        if (!window) {
+            throw new Error(`Window with ID ${windowId} not found`);
+        }
+        // Simulate handling user interactions
+        this.emit('userInteraction', windowId, event);
+    }
+
+    getWindowInfo(windowId) {
+        console.log(`Getting info for window ${windowId}`);
+        const window = this.windows.get(windowId);
+        if (!window) {
+            throw new Error(`Window with ID ${windowId} not found`);
+        }
+        return window;
+    }
+
+    listWindows() {
+        console.log("Listing all windows...");
+        return Array.from(this.windows.values());
+    }
+}
+
+module.exports = UIManager;
+
+===================================================
+===================================================
+[d:\JSOS\wow64\wow64.js]
+
+class Wow64Manager {
+    constructor() {
+        this.processMap = new Map(); // Maps 32-bit process IDs to process information
+        this.nextProcessId = 1;
+    }
+
+    initialize() {
+        console.log("Initializing Wow64 Manager...");
+        this._setupWow64();
+        console.log("Wow64 Manager initialized.");
+    }
+
+    _setupWow64() {
+        console.log("Setting up Wow64 components...");
+        // Simulate setting up Wow64 components
+    }
+
+    create32BitProcess(executablePath, args) {
+        const processId = this.nextProcessId++;
+        console.log(`Creating 32-bit process ${processId} with executable: ${executablePath}`);
+
+        const processInfo = {
+            id: processId,
+            executablePath,
+            args,
+            status: 'running',
+            memory: this._allocateMemoryFor32BitProcess(),
+            threads: []
+        };
+
+        this.processMap.set(processId, processInfo);
+        console.log(`32-bit process ${processId} created.`);
+        return processId;
+    }
+
+    terminate32BitProcess(processId) {
+        console.log(`Terminating 32-bit process ${processId}`);
+        const process = this.processMap.get(processId);
+        if (!process) {
+            throw new Error(`32-bit process with ID ${processId} not found`);
+        }
+        process.status = 'terminated';
+        this.processMap.delete(processId);
+        console.log(`32-bit process ${processId} terminated.`);
+    }
+
+    _allocateMemoryFor32BitProcess() {
+        console.log("Allocating memory for 32-bit process...");
+        // Simulate memory allocation for 32-bit process
+        return {
+            baseAddress: 0x10000000,
+            size: 512 * 1024 * 1024 // 512 MB for example
+        };
+    }
+
+    handle32BitSystemCall(processId, sysCallId, args) {
+        console.log(`Handling 32-bit system call ${sysCallId} for process ${processId} with args:`, args);
+        const process = this.processMap.get(processId);
+        if (!process) {
+            throw new Error(`32-bit process with ID ${processId} not found`);
+        }
+        // Implement system call translation logic
+        switch (sysCallId) {
+            case 'readFile':
+                return this._readFile(process, ...args);
+            case 'writeFile':
+                return this._writeFile(process, ...args);
+            case 'allocateMemory':
+                return this._allocateMemory(process, ...args);
+            case 'freeMemory':
+                return this._freeMemory(process, ...args);
+            case 'createThread':
+                return this._createThread(process, ...args);
+            case 'terminateThread':
+                return this._terminateThread(process, ...args);
+            default:
+                throw new Error(`Unknown 32-bit system call ID: ${sysCallId}`);
+        }
+    }
+
+    _readFile(process, fileHandle, buffer, offset, length) {
+        console.log(`Reading file in 32-bit process ${process.id}`);
+        // Simulate reading file in 32-bit process
+        return `Read ${length} bytes from file handle ${fileHandle}`;
+    }
+
+    _writeFile(process, fileHandle, buffer, offset, length) {
+        console.log(`Writing file in 32-bit process ${process.id}`);
+        // Simulate writing file in 32-bit process
+        return `Wrote ${length} bytes to file handle ${fileHandle}`;
+    }
+
+    _allocateMemory(process, size) {
+        console.log(`Allocating ${size} bytes of memory in 32-bit process ${process.id}`);
+        // Simulate memory allocation in 32-bit process
+        const address = process.memory.baseAddress + Math.floor(Math.random() * 100000);
+        return address;
+    }
+
+    _freeMemory(process, address, size) {
+        console.log(`Freeing ${size} bytes of memory at address ${address} in 32-bit process ${process.id}`);
+        // Simulate memory freeing in 32-bit process
+    }
+
+    _createThread(process, startAddress, param) {
+        const threadId = process.threads.length + 1;
+        console.log(`Creating thread ${threadId} in 32-bit process ${process.id}`);
+        // Simulate thread creation logic
+        process.threads.push({ id: threadId, startAddress, param, status: 'running' });
+        return threadId;
+    }
+
+    _terminateThread(process, threadId) {
+        console.log(`Terminating thread ${threadId} in 32-bit process ${process.id}`);
+        const thread = process.threads.find(t => t.id === threadId);
+        if (!thread) {
+            throw new Error(`Thread with ID ${threadId} not found in process ${process.id}`);
+        }
+        thread.status = 'terminated';
+        process.threads = process.threads.filter(t => t.id !== threadId);
+    }
+
+    list32BitProcesses() {
+        console.log("Listing all 32-bit processes...");
+        return Array.from(this.processMap.keys());
+    }
+}
+
+module.exports = Wow64Manager;
+
+===================================================
