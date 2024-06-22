@@ -1,4 +1,3 @@
-// test_win32_subsystem.js
 const Win32Subsystem = require('../subsys/win32_subsystem');
 
 function runWin32SubsystemTests() {
@@ -6,12 +5,12 @@ function runWin32SubsystemTests() {
     win32Subsystem.initialize();
 
     const processId = 1;
-    const processInfo = { name: 'Win32 Process', priority: 'normal' };
+    const processInfo = { priority: 'normal' };
     win32Subsystem.createProcess(processId, processInfo);
 
     console.log('Process Info:', win32Subsystem.getProcessInfo(processId));
 
-    win32Subsystem.sendMessage(processId, 'Hello, Win32 Process!');
+    win32Subsystem.sendMessage(processId, { pid: processId, message: 'Hello, Win32 Process!' });
 
     const filePath = 'D:\\jsos\\tests\\test.txt';
     const newFilePath = 'D:\\jsos\\tests\\new_test.txt';
@@ -50,13 +49,13 @@ function runWin32SubsystemTests() {
 
     // Test file operations
     try {
-        fileHandle = win32Subsystem.handleApiCall('CreateFile', [filePath, 'w', 'rw', null, 'open', 'normal', null]);
-        win32Subsystem.handleApiCall('WriteFile', [fileHandle, writeBuffer, writeBuffer.length, null, null]);
+        fileHandle = win32Subsystem.handleApiCall('CreateFile', [filePath, 'w']);
+        win32Subsystem.handleApiCall('WriteFile', [fileHandle, writeBuffer, 0, writeBuffer.length, null]);
         win32Subsystem.handleApiCall('CloseHandle', [fileHandle]);
 
-        fileHandle = win32Subsystem.handleApiCall('CreateFile', [filePath, 'r', 'rw', null, 'open', 'normal', null]);
+        fileHandle = win32Subsystem.handleApiCall('CreateFile', [filePath, 'r']);
         const readBuffer = Buffer.alloc(writeBuffer.length);
-        win32Subsystem.handleApiCall('ReadFile', [fileHandle, readBuffer, readBuffer.length, null, null]);
+        win32Subsystem.handleApiCall('ReadFile', [fileHandle, readBuffer, 0, writeBuffer.length, null]);
         console.log('Read result:', readBuffer.toString('utf8', 0, writeBuffer.length));
         win32Subsystem.handleApiCall('CloseHandle', [fileHandle]);
 
@@ -74,17 +73,15 @@ function runWin32SubsystemTests() {
 
     // Test registry operations
     try {
-        // First ensure the key doesn't exist
         cleanupRegistryKey('HKEY_LOCAL_MACHINE', 'Software\\Test');
 
-        // Create, modify, query, and delete registry key
-        win32Subsystem.handleApiCall('RegCreateKeyEx', ['HKEY_LOCAL_MACHINE', 'Software\\Test', 0, null, 0, 'KEY_WRITE', null, null]);
+        win32Subsystem.handleApiCall('RegCreateKeyEx', ['HKEY_LOCAL_MACHINE', 'Software\\Test']);
         console.log('Registry key created.');
 
-        win32Subsystem.handleApiCall('RegSetValueEx', ['HKEY_LOCAL_MACHINE\\Software\\Test', 'TestValue', 0, 'REG_SZ', 'TestData', 'TestData'.length]);
+        win32Subsystem.handleApiCall('RegSetValueEx', ['HKEY_LOCAL_MACHINE\\Software\\Test', 'TestValue', 'TestData']);
         console.log('Registry value set.');
 
-        const value = win32Subsystem.handleApiCall('RegQueryValueEx', ['HKEY_LOCAL_MACHINE\\Software\\Test', 'TestValue', null, null, null, null]);
+        const value = win32Subsystem.handleApiCall('RegQueryValueEx', ['HKEY_LOCAL_MACHINE\\Software\\Test', 'TestValue']);
         console.log('Registry Value:', value);
 
         win32Subsystem.handleApiCall('RegCloseKey', ['HKEY_LOCAL_MACHINE\\Software\\Test']);

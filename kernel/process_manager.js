@@ -1,3 +1,5 @@
+// File: D:\JSOS\kernel\process_manager.js
+
 // Define the Process Control Block (PCB)
 class PCB {
     constructor(pid, state, priority, programCounter, registers, memory) {
@@ -75,6 +77,10 @@ class ProcessManager {
         } else {
             console.error(`Process ${pid} not found.`);
         }
+    }
+
+    getProcessInfo(pid) {
+        return this.processTable.find(p => p.pid === pid);
     }
 
     roundRobinScheduling() {
