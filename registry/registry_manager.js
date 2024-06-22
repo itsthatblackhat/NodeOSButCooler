@@ -3,99 +3,107 @@ const path = require('path');
 
 class RegistryManager {
     constructor() {
-        this.registryFilePath = path.join(__dirname, 'registry.json');
-        this.registryData = {};
+        this.registry = {};
+        this.registryFile = path.join(__dirname, 'registry.json');
+        this.loadRegistry();
     }
 
-    initialize() {
-        console.log("Initializing Registry Manager...");
-        this._loadRegistry();
-        console.log("Registry Manager initialized.");
+    loadRegistry() {
+        if (fs.existsSync(this.registryFile)) {
+            this.registry = JSON.parse(fs.readFileSync(this.registryFile));
+        } else {
+            this.registry = {};
+        }
     }
 
-    _loadRegistry() {
-        try {
-            if (fs.existsSync(this.registryFilePath)) {
-                const data = fs.readFileSync(this.registryFilePath, 'utf8');
-                this.registryData = JSON.parse(data);
-                console.log("Registry loaded from file.");
-            } else {
-                this.registryData = {};
-                console.log("No registry file found, starting with empty registry.");
+    saveRegistry() {
+        fs.writeFileSync(this.registryFile, JSON.stringify(this.registry, null, 2));
+    }
+
+    createKey(keyPath) {
+        const keys = keyPath.split('\\');
+        let current = this.registry;
+
+        keys.forEach(key => {
+            if (!current[key]) {
+                current[key] = {};
             }
-        } catch (error) {
-            console.error("Failed to load registry:", error);
-            this.registryData = {};
+            current = current[key];
+        });
+
+        this.saveRegistry();
+    }
+
+    setValue(keyPath, valueName, value) {
+        const keys = keyPath.split('\\');
+        let current = this.registry;
+
+        for (let i = 0; i < keys.length; i++) {
+            if (!current[keys[i]]) {
+                throw new Error(`Key "${keys.slice(0, i + 1).join('\\')}" not found`);
+            }
+            if (i === keys.length - 1) {
+                current[keys[i]][valueName] = value;
+            } else {
+                current = current[keys[i]];
+            }
+        }
+
+        this.saveRegistry();
+    }
+
+    getValue(keyPath, valueName) {
+        const keys = keyPath.split('\\');
+        let current = this.registry;
+
+        for (let i = 0; i < keys.length; i++) {
+            if (!current[keys[i]]) {
+                throw new Error(`Key "${keys.slice(0, i + 1).join('\\')}" not found`);
+            }
+            if (i === keys.length - 1) {
+                return current[keys[i]][valueName];
+            } else {
+                current = current[keys[i]];
+            }
         }
     }
 
-    _saveRegistry() {
-        try {
-            const data = JSON.stringify(this.registryData, null, 2);
-            fs.writeFileSync(this.registryFilePath, data, 'utf8');
-            console.log("Registry saved to file.");
-        } catch (error) {
-            console.error("Failed to save registry:", error);
+    deleteKey(keyPath) {
+        const keys = keyPath.split('\\');
+        let current = this.registry;
+
+        for (let i = 0; i < keys.length - 1; i++) {
+            if (!current[keys[i]]) {
+                throw new Error(`Key "${keys.slice(0, i + 1).join('\\')}" not found`);
+            }
+            current = current[keys[i]];
         }
-    }
 
-    createKey(key) {
-        if (this.registryData[key]) {
-            throw new Error(`Key "${key}" already exists`);
+        const lastKey = keys[keys.length - 1];
+        if (!current[lastKey]) {
+            throw new Error(`Key "${keyPath}" not found`);
         }
-        this.registryData[key] = {};
-        this._saveRegistry();
-        console.log(`Key "${key}" created.`);
+
+        delete current[lastKey];
+        this.saveRegistry();
     }
 
-    deleteKey(key) {
-        if (!this.registryData[key]) {
-            throw new Error(`Key "${key}" not found`);
+    openKey(keyPath) {
+        const keys = keyPath.split('\\');
+        let current = this.registry;
+
+        for (let i = 0; i < keys.length; i++) {
+            if (!current[keys[i]]) {
+                throw new Error(`Key "${keys.slice(0, i + 1).join('\\')}" not found`);
+            }
+            current = current[keys[i]];
         }
-        delete this.registryData[key];
-        this._saveRegistry();
-        console.log(`Key "${key}" deleted.`);
+
+        return current;
     }
 
-    setValue(key, valueName, value) {
-        if (!this.registryData[key]) {
-            throw new Error(`Key "${key}" not found`);
-        }
-        this.registryData[key][valueName] = value;
-        this._saveRegistry();
-        console.log(`Value "${valueName}" set for key "${key}".`);
-    }
-
-    getValue(key, valueName) {
-        if (!this.registryData[key]) {
-            throw new Error(`Key "${key}" not found`);
-        }
-        return this.registryData[key][valueName];
-    }
-
-    deleteValue(key, valueName) {
-        if (!this.registryData[key]) {
-            throw new Error(`Key "${key}" not found`);
-        }
-        delete this.registryData[key][valueName];
-        this._saveRegistry();
-        console.log(`Value "${valueName}" deleted from key "${key}".`);
-    }
-
-    listKeys() {
-        return Object.keys(this.registryData);
-    }
-
-    listValues(key) {
-        if (!this.registryData[key]) {
-            throw new Error(`Key "${key}" not found`);
-        }
-        return Object.keys(this.registryData[key]);
-    }
-
-    closeKey(key) {
-        // Placeholder for closing a key
-        console.log(`Registry key ${key} closed.`);
+    closeKey(keyPath) {
+        console.log(`Registry key ${keyPath} closed.`);
     }
 }
 

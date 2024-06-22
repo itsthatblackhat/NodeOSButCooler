@@ -11,7 +11,7 @@ class Win32Subsystem {
     initialize() {
         console.log("Initializing Win32 Subsystem...");
         this.processManager.initialize();
-        this.registryManager.initialize();
+        this.registryManager.loadRegistry();
         this._setupWin32();
         console.log("Win32 Subsystem initialized.");
     }
@@ -30,7 +30,7 @@ class Win32Subsystem {
     }
 
     getProcessInfo(pid) {
-        return this.processManager.listProcesses().find(p => p.pid === pid);
+        return this.processManager.getProcessInfo(pid);
     }
 
     sendMessage(pid, message) {
@@ -53,10 +53,6 @@ class Win32Subsystem {
                 return this._moveFile(...args);
             case 'GetFileAttributes':
                 return this._getFileAttributes(...args);
-            case 'CopyFile':
-                return this._copyFile(...args);
-            case 'MoveFileEx':
-                return this._moveFileEx(...args);
             case 'RegCreateKeyEx':
                 return this._regCreateKeyEx(...args);
             case 'RegSetValueEx':
@@ -74,7 +70,7 @@ class Win32Subsystem {
         }
     }
 
-    _createFile(filePath, accessMode, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile) {
+    _createFile(filePath, accessMode) {
         try {
             const fd = fs.openSync(filePath, accessMode);
             console.log(`Creating file ${filePath}`);
@@ -85,9 +81,9 @@ class Win32Subsystem {
         }
     }
 
-    _readFile(handle, buffer, numBytesToRead, numBytesRead, overlapped) {
+    _readFile(handle, buffer, offset, length, position) {
         try {
-            const bytesRead = fs.readSync(handle, buffer, 0, numBytesToRead, null);
+            const bytesRead = fs.readSync(handle, buffer, offset, length, position);
             console.log('Reading file');
             return bytesRead;
         } catch (error) {
@@ -96,9 +92,9 @@ class Win32Subsystem {
         }
     }
 
-    _writeFile(handle, buffer, numBytesToWrite, numBytesWritten, overlapped) {
+    _writeFile(handle, buffer, offset, length, position) {
         try {
-            const bytesWritten = fs.writeSync(handle, buffer, 0, numBytesToWrite, null);
+            const bytesWritten = fs.writeSync(handle, buffer, offset, length, position);
             console.log('Writing file');
             return bytesWritten;
         } catch (error) {
@@ -122,8 +118,11 @@ class Win32Subsystem {
             fs.unlinkSync(filePath);
             console.log(`Deleting file ${filePath}`);
         } catch (error) {
-            console.error(`Error deleting file ${filePath}:`, error);
-            throw error;
+            if (error.code === 'ENOENT') {
+                console.log(`File not found: ${filePath}, cannot delete.`);
+            } else {
+                console.error(`Error deleting file ${filePath}:`, error);
+            }
         }
     }
 
@@ -155,52 +154,17 @@ class Win32Subsystem {
         }
     }
 
-    _copyFile(srcFilePath, destFilePath, failIfExists) {
+    _regCreateKeyEx(hKey, subKey) {
         try {
-            if (failIfExists && fs.existsSync(destFilePath)) {
-                throw new Error(`Destination file ${destFilePath} already exists`);
-            }
-            fs.copyFileSync(srcFilePath, destFilePath);
-            console.log(`Copied file from ${srcFilePath} to ${destFilePath}`);
-        } catch (error) {
-            console.error(`Error copying file from ${srcFilePath} to ${destFilePath}:`, error);
-            throw error;
-        }
-    }
-
-    _moveFileEx(existingFilePath, newFilePath, flags) {
-        try {
-            if (flags & MOVEFILE_REPLACE_EXISTING) {
-                fs.renameSync(existingFilePath, newFilePath);
-                console.log(`Moved file from ${existingFilePath} to ${newFilePath} with replace existing flag`);
-            } else {
-                if (fs.existsSync(newFilePath)) {
-                    throw new Error(`Destination file ${newFilePath} already exists`);
-                }
-                fs.renameSync(existingFilePath, newFilePath);
-                console.log(`Moved file from ${existingFilePath} to ${newFilePath}`);
-            }
-        } catch (error) {
-            console.error(`Error moving file from ${existingFilePath} to ${newFilePath}:`, error);
-            throw error;
-        }
-    }
-
-    _regCreateKeyEx(hKey, subKey, reserved, lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition) {
-        try {
-            if (!this.registryManager.getValue(hKey, subKey)) {
-                this.registryManager.createKey(hKey + '\\' + subKey);
-                console.log(`Key "${hKey}\\${subKey}" created.`);
-            } else {
-                console.log(`Key "${hKey}\\${subKey}" already exists.`);
-            }
+            this.registryManager.createKey(`${hKey}\\${subKey}`);
+            console.log(`Key "${hKey}\\${subKey}" created.`);
         } catch (error) {
             console.error(`Error creating registry key ${hKey}\\${subKey}:`, error);
             throw error;
         }
     }
 
-    _regSetValueEx(hKey, lpValueName, reserved, dwType, lpData, cbData) {
+    _regSetValueEx(hKey, lpValueName, lpData) {
         try {
             this.registryManager.setValue(hKey, lpValueName, lpData);
             console.log(`Value "${lpValueName}" set for key "${hKey}".`);
@@ -210,7 +174,7 @@ class Win32Subsystem {
         }
     }
 
-    _regOpenKeyEx(hKey, subKey, ulOptions, samDesired, phkResult) {
+    _regOpenKeyEx(hKey, subKey) {
         try {
             this.registryManager.openKey(hKey, subKey);
             console.log(`Registry key ${hKey}\\${subKey} opened.`);
@@ -220,7 +184,7 @@ class Win32Subsystem {
         }
     }
 
-    _regQueryValueEx(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData) {
+    _regQueryValueEx(hKey, lpValueName) {
         try {
             const value = this.registryManager.getValue(hKey, lpValueName);
             console.log(`Registry value ${lpValueName} queried in key ${hKey}.`);
@@ -245,8 +209,12 @@ class Win32Subsystem {
             this.registryManager.deleteKey(`${hKey}\\${subKey}`);
             console.log(`Key "${hKey}\\${subKey}" deleted.`);
         } catch (error) {
-            console.error(`Error deleting registry key ${hKey}\\${subKey}:`, error);
-            throw error;
+            if (error.message.includes('not found')) {
+                console.log(`Registry key not found: ${hKey}\\${subKey}, cannot delete.`);
+            } else {
+                console.error(`Error deleting registry key ${hKey}\\${subKey}:`, error);
+                throw error;
+            }
         }
     }
 }
